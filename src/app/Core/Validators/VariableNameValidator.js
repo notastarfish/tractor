@@ -1,67 +1,59 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-var Promise = require('bluebird');
+// Constants:
+const MODEL_CHANGE_EVENT = 'VariableNameValidator:ModelChange';
 
-// Module:
-var Core = require('../Core');
+// Utilities:
+import changecase from 'change-case';
 
 // Dependencies:
-var camelcase = require('change-case').camel;
-var pascalcase = require('change-case').pascal;
-require('../Components/Notifier/NotifierService');
-require('../Services/ValidationService');
+import angular from 'angular';
+import ValidationService from '../Services/ValidationService';
 
-var VariableNameValidator = function (
-    $rootScope,
-    notifierService,
-    validationService
-) {
-    var ModelChangeEvent = 'VariableNameValidator:ModelChange';
+class VariableNameValidator {
+    constructor (
+        $rootScope,
+        validationService
+    ) {
+        this.$rootScope = $rootScope;
+        this.validationService = validationService;
 
-    return {
-        restrict: 'A',
+        this.restrict = 'A';
+        this.require = 'ngModel';
 
-        require: 'ngModel',
-
-        scope: {
+        this.scope = {
             variableValue: '=ngModel',
             variableNameModel: '='
-        },
+        };
+    }
 
-        link: link
-    };
-
-    function link ($scope, element, attrs, ngModelController) {
-        var destroy = $rootScope.$on(ModelChangeEvent, function (event, changing) {
+    link ($scope, element, attrs, ngModelController) {
+        let destroy = this.$rootScope.$on(MODEL_CHANGE_EVENT, (event, changing) => {
             if (ngModelController !== changing) {
                 ngModelController.$validate();
             }
         });
-
-        $scope.$watch('variableValue', function () {
-            $rootScope.$broadcast(ModelChangeEvent, ngModelController);
+        $scope.$on('$destroy', () => destroy());
+        $scope.$watch('variableValue', () => {
+            this.$rootScope.$broadcast(MODEL_CHANGE_EVENT, ngModelController);
         });
 
-        $scope.$on('$destroy', function () {
-            destroy();
-        });
-
-        ngModelController.$validators.variableNameUnique = function (value) {
-            var allVariableNames = $scope.variableNameModel.getAllVariableNames();
-            var result = !_.contains(allVariableNames, value);
-            return result;
+        ngModelController.$validators.variableNameUnique = value => {
+            let allVariableNames = $scope.variableNameModel.getAllVariableNames();
+            return !allVariableNames.includes(value);
         };
 
-        ngModelController.$validators.variableNameValid = function (value) {
-            var variableName = $scope.$parent.isClass ? pascalcase(value) : camelcase(value);
+        ngModelController.$validators.variableNameValid = value => {
+            let variableName = $scope.$parent.isClass ? changecase.pascal(value) : changecase.camel(value);
             if (variableName.length === 0) {
                 return false;
             }
-            return validationService.validateVariableName(variableName);
+            return this.validationService.validateVariableName(variableName);
         };
     }
-};
+}
 
-Core.directive('variableName', VariableNameValidator);
+export default angular.module('variableName', [
+    ValidationService.name
+])
+.directive('variableName', VariableNameValidator);

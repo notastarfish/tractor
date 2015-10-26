@@ -1,53 +1,55 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var assert = require('assert');
-
-// Module:
-var FeatureEditor = require('../FeatureEditor');
+import assert from 'assert';
 
 // Dependencies:
-require('./ScenarioParserService');
-require('../Models/FeatureModel');
+import angular from 'angular';
+import FeatureModel from '../Models/FeatureModel';
+import ScenarioParserService from './ScenarioParserService';
 
-var FeatureParserService = function FeatureParserService (
-    ScenarioParserService,
-    FeatureModel
-) {
-    return {
-        parse: parse
-    };
+class FeatureParserService {
+    constructor (
+        FeatureModel,
+        scenarioParserService
+    ) {
+        this.FeatureModel = FeatureModel;
+        this.scenarioParserService = scenarioParserService;
+    }
 
-    function parse (featureFile) {
+    parse (featureFile) {
         try {
-            var feature = new FeatureModel({
+            let feature = new this.FeatureModel({
                 isSaved: true,
                 path: featureFile.path
             });
 
-            var featureTokens = _.first(featureFile.tokens);
+            let [featureTokens] = featureFile.tokens;
             feature.name = featureTokens.name;
             feature.inOrderTo = featureTokens.inOrderTo;
             feature.asA = featureTokens.asA;
             feature.iWant = featureTokens.iWant;
 
-            _.each(featureTokens.elements, function (element, index) {
+            featureTokens.elements.forEach((element, index) => {
                 try {
-                    var parsedScenario = ScenarioParserService.parse(feature, element);
+                    let parsedScenario = this.scenarioParserService.parse(feature, element);
                     assert(parsedScenario);
                     feature.scenarios.push(parsedScenario);
                     return;
-                } catch (e) { }
+                } catch (e) {}
 
                 console.warn('Invalid Feature:', element, index);
             });
 
             return feature;
         } catch (e) {
-            return new FeatureModel();
+            return new this.FeatureModel();
         }
     }
-};
+}
 
-FeatureEditor.service('FeatureParserService', FeatureParserService);
+export default angular.module('featureParserService', [
+    FeatureModel.name,
+    ScenarioParserService.name
+])
+.service('featureParserService', FeatureParserService);

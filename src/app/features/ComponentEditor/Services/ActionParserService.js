@@ -1,45 +1,44 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var assert = require('assert');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
+import assert from 'assert';
 
 // Dependencies:
-require('./ParameterParserService');
-require('./InteractionParserService');
-require('../Models/ActionModel');
+import angular from 'angular';
+import ActionModel from '../Models/ActionModel';
+import InteractionParserService from './InteractionParserService';
+import ParameterParserService from './ParameterParserService';
 
-var ActionParserService = function ActionParserService (
-    ParameterParserService,
-    InteractionParserService,
-    ActionModel
-) {
-    return {
-        parse: parse
-    };
+class ActionParserService {
+    constructor (
+        ActionModel,
+        interactionParserService,
+        parameterParserService
+    ) {
+        this.ActionModel = ActionModel;
+        this.interactionParserService = interactionParserService;
+        this.parameterParserService = parameterParserService;
+    }
 
-    function parse (component, astObject, meta) {
-        var action = new ActionModel(component);
+    parse (component, astObject, meta) {
+        let action = new this.ActionModel(component);
 
-        var actionFunctionExpression = astObject.expression.right;
-        var actionBody = actionFunctionExpression.body.body;
+        let actionFunctionExpression = astObject.expression.right;
+        let actionBody = actionFunctionExpression.body.body;
 
-        _.each(actionFunctionExpression.params, function (param) {
-            var parameter = ParameterParserService.parse(action);
+        actionFunctionExpression.params.forEach(param => {
+            let parameter = this.parameterParserService.parse(action);
             assert(parameter);
             parameter.name = meta.parameters[action.parameters.length].name;
             action.parameters.push(parameter);
         });
 
-        _.each(actionBody, function (statement, index) {
-            var notSelf = false;
-            var notInteraction = false;
+        actionBody.forEach((statement, index) => {
+            let notSelf = false;
+            let notInteraction = false;
 
             try {
-                var selfVariableDeclarator = _.first(statement.declarations);
+                let [selfVariableDeclarator] = statement.declarations;
                 assert(selfVariableDeclarator.id.name === 'self');
             } catch (e) {
                 notSelf = true;
@@ -47,7 +46,7 @@ var ActionParserService = function ActionParserService (
 
             try {
                 if (notSelf) {
-                    InteractionParserService.parse(action, statement);
+                    this.interactionParserService.parse(action, statement);
                 }
             } catch (e) {
                 notInteraction = true;
@@ -60,6 +59,11 @@ var ActionParserService = function ActionParserService (
 
         return action;
     }
-};
+}
 
-ComponentEditor.service('ActionParserService', ActionParserService);
+export default angular.module('actionParserService', [
+    ActionModel.name,
+    InteractionParserService.name,
+    ParameterParserService.name
+])
+.service('actionParserService', ActionParserService);

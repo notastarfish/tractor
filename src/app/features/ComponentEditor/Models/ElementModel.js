@@ -1,197 +1,121 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
+import changecase from 'change-case';
+import isNumber from 'lodash.isnumber';
 
 // Dependencies:
-var camelcase = require('change-case').camel;
-require('../../../Core/Services/ASTCreatorService');
-require('../../../Core/Services/StringToLiteralService');
-require('./FilterModel');
+import angular from 'angular';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
+import ElementMethods from './ElementMethods';
+import FilterModel from './FilterModel';
+import StringToLiteralService from '../../../Core/Services/StringToLiteralService';
 
-var createElementModelConstructor = function (
+function createElementModelConstructor (
     astCreatorService,
-    stringToLiteralService,
-    FilterModel
+    FilterModel,
+    stringToLiteralService
 ) {
-    var ast = astCreatorService;
+    const component = Symbol();
 
-    var ElementModel = function ElementModel (component) {
-        Object.defineProperties(this, {
-            component: {
-                get: function () {
-                    return component;
-                }
-            },
-            selector: {
-                get: function () {
-                    return _.first(this.filters);
-                }
-            },
-            variableName: {
-                get: function () {
-                    return camelcase(this.name);
-                }
-            },
-            meta: {
-                get: function () {
-                    return {
-                        name: this.name
-                    };
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
+    return class ElementModel {
+        constructor (_component) {
+            this[component] = _component;
+
+            this.name = '';
+            this.filters = [];
+            this.methods = [
+                ElementMethods.CLICK,
+                ElementMethods.SEND_KEYS,
+                ElementMethods.GET_TEXT,
+                ElementMethods.IS_ENABLED,
+                ElementMethods.IS_SELECTED,
+                ElementMethods.SUBMIT,
+                ElementMethods.CLEAR,
+                ElementMethods.IS_DISPLAYED,
+                ElementMethods.GET_OUTER_HTML,
+                ElementMethods.GET_INNER_HTML
+            ]
+            this.sortableFilters = [];
+        }
+
+        get component () {
+            return this[component];
+        }
+
+        get selector () {
+            let [filter] = this.filters;
+            return filter;
+        }
+
+        get variableName () {
+            return changecase.camel(this.name);
+        }
+
+        get meta () {
+            return {
+                name: this.name
+            };
+        }
+
+        get ast () {
+            return toAST.call(this);
+        }
+
+        addFilter (filter = new FilterModel(this)) {
+            this.filters.push(filter);
+            if (this.filters.length > 1) {
+                this.sortableFilters.push(filter);
             }
-        });
+        }
 
-        this.name = '';
-        this.filters = [];
-        this.sortableFilters = [];
+        removeFilter (toRemove) {
+            this.filters.splice(this.filters.findIndex(filter => {
+                return filter === toRemove;
+            }), 1);
+            this.sortableFilters.splice(this.sortableFilters.findIndex(sortableFilter => {
+                return sortableFilter === toRemove;
+            }), 1);
+        }
+
+        getAllVariableNames () {
+            return this.component.getAllVariableNames(this);
+        }
     };
-
-    ElementModel.prototype.addFilter = function (filter) {
-        filter = filter || new FilterModel(this);
-        this.filters.push(filter);
-        if (this.filters.length > 1) {
-            this.sortableFilters.push(filter);
-        }
-    };
-
-    ElementModel.prototype.removeFilter = function (toRemove) {
-        _.remove(this.filters, function (filter) {
-            return filter === toRemove;
-        });
-        _.remove(this.sortableFilters, function (sortableFilter) {
-            return sortableFilter === toRemove;
-        });
-    };
-
-    ElementModel.prototype.getAllVariableNames = function () {
-        return this.component.getAllVariableNames(this);
-    };
-
-    ElementModel.prototype.methods = [{
-        name: 'click',
-        description: 'Schedules a command to click on this element.',
-        returns: 'promise'
-    }, {
-        name: 'sendKeys',
-        description: 'Schedules a command to type a sequence on the DOM element represented by this instance.',
-        arguments: [{
-            name: 'keys',
-            description: 'The sequence of keys to type.',
-            type: 'string',
-            required: true
-        }],
-        returns: 'promise'
-    }, {
-        name: 'getText',
-        description: 'Get the visible (i.e. not hidden by CSS) innerText of this element, including sub-elements, without any leading or trailing whitespace.',
-        returns: 'promise',
-        promise: {
-            name: 'text',
-            type: 'string',
-            required: true
-        }
-    }, {
-        name: 'isEnabled',
-        description: 'Schedules a command to query whether the DOM element represented by this instance is enabled, as dictated by the `disabled` attribute.',
-        returns: 'promise',
-        promise: {
-            name: 'enabled',
-            type: 'boolean',
-            required: true
-        }
-    }, {
-        name: 'isSelected',
-        description: 'Schedules a command to query whether this element is selected.',
-        returns: 'promise',
-        promise: {
-            name: 'selected',
-            type: 'boolean',
-            required: true
-        }
-    }, {
-        name: 'submit',
-        description: 'Schedules a command to submit the form containing this element (or this element if it is a FORM element). This command is a no-op if the element is not contained in a form.',
-        returns: 'promise'
-    }, {
-        name: 'clear',
-        description: 'Schedules a command to clear the {@code value} of this element. This command has no effect if the underlying DOM element is neither a text INPUT element nor a TEXTAREA element.',
-        returns: 'promise'
-    }, {
-        name: 'isDisplayed',
-        description: 'Schedules a command to test whether this element is currently displayed.',
-        returns: 'promise',
-        promise: {
-            name: 'displayed',
-            type: 'boolean',
-            required: true
-        }
-    }, {
-        name: 'getOuterHtml',
-        description: 'Schedules a command to retrieve the outer HTML of this element.',
-        returns: 'promise',
-        promise: {
-            name: 'outerHtml',
-            type: 'string',
-            required: true
-        }
-    }, {
-        name: 'getInnerHtml',
-        description: 'Schedules a command to retrieve the inner HTML of this element.',
-        returns: 'promise',
-        promise: {
-            name: 'innerHtml',
-            type: 'string',
-            required: true
-        }
-    }];
-
-    return ElementModel;
 
     function toAST () {
-        var element = ast.identifier(this.variableName);
-        var filters = filtersAST.call(this);
+        let element = astCreatorService.identifier(this.variableName);
+        let filters = filtersAST.call(this);
 
-        var template = 'this.<%= element %> = <%= filters %>;';
+        let template = 'this.<%= element %> = <%= filters %>;';
 
-        return ast.expression(template, {
-            element: element,
-            filters: filters
-        });
+        return astCreatorService.expression(template, { element, filters });
     }
 
     function filtersAST () {
-        var template = '';
-        var fragments = {};
-        _.reduce(this.filters, function (previousFilter, filter, index) {
-            var filterTemplate = '<%= filter' + index + ' %>';
-            if (!template.length) {
-                template += filterAST(filter, filterTemplate);
-            } else {
+        let template = '';
+        let fragments = {};
+        this.filters.reduce((previousFilter, filter, index) => {
+            let filterTemplate = `<%= filter${index} %>`;
+            if (template.length) {
                 template += filterAfterFilterAST(previousFilter, filter, filterTemplate);
+            } else {
+                template += filterAST(filter, filterTemplate);
             }
 
-            fragments['filter' + index] = filter.ast;
+            fragments[`filter${index}`] = filter.ast;
 
             return filter;
         }, {});
 
-        return ast.expression(template, fragments);
+        return astCreatorService.expression(template, fragments);
     }
 
     function filterAST (filter, filterTemplate) {
         if (filter.isGroup) {
-            return 'element.all(' + filterTemplate + ')';
+            return `element.all(${filterTemplate})`;
         } else {
-            return 'element(' + filterTemplate + ')';
+            return `element(${filterTemplate})`;
         }
     }
 
@@ -205,27 +129,26 @@ var createElementModelConstructor = function (
     }
 
     function filterAfterGroupFilter (filter, filterTemplate) {
-        var locatorLiteral = stringToLiteralService.toLiteral(filter.locator);
-        if (_.isNumber(locatorLiteral)) {
-            return '.get(' + filterTemplate + ')';
+        let locatorLiteral = stringToLiteralService.toLiteral(filter.locator);
+        if (isNumber(locatorLiteral)) {
+            return `.get(${filterTemplate})`;
         } else {
-            return '.filter(' + filterTemplate + ').get(0)';
+            return `.filter(${filterTemplate}).get(0)`;
         }
     }
 
     function filterAfterSingleFilter (filter, filterTemplate) {
         if (filter.isGroup) {
-            return '.all(' + filterTemplate + ')';
+            return `.all(${filterTemplate})`;
         } else {
-            return '.element(' + filterTemplate + ')';
+            return `.element(${filterTemplate})`;
         }
     }
-};
+}
 
-ComponentEditor.factory('ElementModel', function (
-    astCreatorService,
-    stringToLiteralService,
-    FilterModel
-) {
-    return createElementModelConstructor(astCreatorService, stringToLiteralService, FilterModel);
-});
+export default angular.module('elementModel', [
+    ASTCreatorService.name,
+    FilterModel.name,
+    StringToLiteralService.name
+])
+.factory('ElementModel', createElementModelConstructor);

@@ -1,120 +1,115 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
+// Constants:
+const OPEN_DIRECTORIES = 'OpenDirectories';
 
-// Module:
-var Core = require('../Core');
+// Dependencies:
+import angular from 'angular';
+import ComponentParserService from '../../Features/ComponentEditor/Services/ComponentParserService';
+import MockDataParserService from '../../Features/MockDataEditor/Services/MockDataParserService';
+import PersistentStateService from './PersistentStateService';
 
-var FileStructureService = function FileStructureService (
-    $http,
-    persistentStateService,
-    ComponentParserService,
-    MockDataParserService
-) {
-    var OPEN_DIRECTORIES = 'OpenDirectories';
+class FileStructureService {
+    constructor (
+        $http,
+        componentParserService,
+        mockDataParserService,
+        persistentStateService
+    ) {
+        this.$http = $http;
+        this.componentParserService = componentParserService;
+        this.mockDataParserService = mockDataParserService;
+        this.persistentStateService = persistentStateService;
+    }
 
-    return {
-        getFileStructure: getFileStructure,
-        addDirectory: addDirectory,
-        copyFile: copyFile,
-        deleteDirectory: deleteDirectory,
-        deleteFile: deleteFile,
-        editDirectoryPath: editDirectoryPath,
-        editFilePath: editFilePath,
-        toggleOpenDirectory: toggleOpenDirectory
-    };
-
-    function getFileStructure (type) {
-        return $http.get('/' + type + '/file-structure')
+    getFileStructure (type) {
+        return this.$http.get(`/${type}/file-structure`)
         .then(parseComponentsAndMockData)
-        .then(updateFileStructure);
+        .then(updateFileStructure.bind(this));
     }
 
-    function addDirectory (type, options) {
-        return $http.post('/' + type + '/directory', options)
-        .then(updateFileStructure);
+    addDirectory (type, options) {
+        return this.$http.post(`/${type}/directory`, options)
+        .then(updateFileStructure.bind(this));
     }
 
-    function copyFile (type, options) {
-        return $http.post('/' + type + '/file/copy', options)
-        .then(updateFileStructure);
+    copyFile (type, options) {
+        return this.$http.post(`/${type}/file/copy`, options)
+        .then(updateFileStructure.bind(this));
     }
 
-    function deleteDirectory (type, options) {
-        return $http.delete('/' + type + '/directory', {
-            params: options
-        })
-        .then(updateFileStructure);
+    deleteDirectory (type, params) {
+        return this.$http.delete(`/${type}/directory`, { params })
+        .then(updateFileStructure.bind(this));
     }
 
-    function deleteFile (type, options) {
-        return $http.delete('/' + type + '/file', {
-            params: options
-        })
-        .then(updateFileStructure);
+    deleteFile (type, params) {
+        return this.$http.delete(`/${type}/file`, { params })
+        .then(updateFileStructure.bind(this));
     }
 
-    function editDirectoryPath (type, options) {
+    editDirectoryPath (type, options) {
         options.isDirectory = true;
-        return $http.patch('/' + type + '/directory/path', options)
-        .then(updateFileStructure);
+        return this.$http.patch(`/${type}/directory/path`, options)
+        .then(updateFileStructure.bind(this));
     }
 
-    function editFilePath (type, options) {
-        return $http.patch('/' + type + '/file/path', options)
-        .then(updateFileStructure);
+    editFilePath (type, options) {
+        return this.$http.patch(`/${type}/file/path`, options)
+        .then(updateFileStructure.bind(this));
     }
 
-    function toggleOpenDirectory (directoryPath) {
-        var openDirectories = getOpenDirectories();
+    toggleOpenDirectory (directoryPath) {
+        let openDirectories = getOpenDirectories.call(this);
         if (openDirectories[directoryPath]) {
             delete openDirectories[directoryPath];
         } else {
             openDirectories[directoryPath] = true;
         }
-        persistentStateService.set(OPEN_DIRECTORIES, openDirectories);
+        this.persistentStateService.set(OPEN_DIRECTORIES, openDirectories);
     }
+}
 
-    function parseComponentsAndMockData (fileStructure) {
-        fileStructure.availableComponents = _.map(fileStructure.availableComponents, function (component) {
-            return ComponentParserService.parse(component);
-        });
-        fileStructure.availableMockData = _.map(fileStructure.availableMockData, function (mockData) {
-            return MockDataParserService.parse(mockData);
-        });
-        return fileStructure;
-    }
+function parseComponentsAndMockData (fileStructure) {
+    fileStructure.availableComponents = fileStructure.availableComponents.map(component => {
+        return this.componentParserService.parse(component);
+    });
+    fileStructure.availableMockData = fileStructure.availableMockData.map(mockData => {
+        return this.mockDataParserService.parse(mockData);
+    });
+    return fileStructure;
+}
 
-    function updateFileStructure (fileStructure) {
-        fileStructure.directory = restoreOpenDirectories(fileStructure.directory);
-        fileStructure.directory.allFiles = getAllFiles(fileStructure.directory);
-        fileStructure.directory.open = true;
-        return fileStructure;
-    }
+function updateFileStructure (fileStructure) {
+    fileStructure.directory = restoreOpenDirectories.call(this, fileStructure.directory);
+    fileStructure.directory.allFiles = getAllFiles(fileStructure.directory);
+    fileStructure.directory.open = true;
+    return fileStructure;
+}
 
-    function getOpenDirectories () {
-        return persistentStateService.get(OPEN_DIRECTORIES);
-    }
+function getOpenDirectories () {
+    return this.persistentStateService.get(OPEN_DIRECTORIES);
+}
 
-    function restoreOpenDirectories (directory) {
-        directory.directories.forEach(function (directory) {
-            restoreOpenDirectories(directory);
-        });
-        directory.open = !!getOpenDirectories()[directory.path];
-        return directory;
-    }
+function restoreOpenDirectories (directory) {
+    directory.directories.forEach(directory => {
+        restoreOpenDirectories(directory);
+    });
+    directory.open = !!getOpenDirectories.call(this)[directory.path];
+    return directory;
+}
 
-    function getAllFiles (directory, allFiles) {
-        if (!allFiles) {
-            allFiles = [];
-        }
-        _.each(directory.directories, function (directory) {
-            allFiles = getAllFiles(directory, allFiles);
-        })
-        allFiles = allFiles.concat(directory.files);
-        return allFiles;
-    }
-};
+function getAllFiles (directory, allFiles = []) {
+    directory.directories.forEach(directory => {
+        allFiles = getAllFiles(directory, allFiles);
+    });
+    allFiles = allFiles.concat(directory.files);
+    return allFiles;
+}
 
-Core.service('fileStructureService', FileStructureService);
+export default angular.module('fileStructureService', [
+    ComponentParserService.name,
+    MockDataParserService.name,
+    PersistentStateService.name
+])
+.service('fileStructureService', FileStructureService);

@@ -1,19 +1,17 @@
 'use strict';
 
-// Module:
-var MockDataEditor = require('../MockDataEditor');
-
 // Dependencies:
-require('../Models/MockDataModel');
+import angular from 'angular';
+import MockDataModel from '../Models/MockDataModel';
 
-var MockDataParserService = function MockDataParserService (MockDataModel) {
-    return {
-        parse: parse
-    };
+class MockDataParserService {
+    constructor (MockDataModel) {
+        this.MockDataModel = MockDataModel;
+    }
 
-    function parse (mockDataFile) {
+    parse (mockDataFile) {
         try {
-            var mockDataModel = new MockDataModel(mockDataFile.content, {
+            let mockDataModel = new this.MockDataModel(mockDataFile.content, {
                 isSaved: true,
                 path: mockDataFile.path
             });
@@ -23,6 +21,9 @@ var MockDataParserService = function MockDataParserService (MockDataModel) {
             return new MockDataModel();
         }
     }
-};
+}
 
-MockDataEditor.service('MockDataParserService', MockDataParserService);
+export default angular.module('mockDataParserService', [
+    MockDataModel.name
+])
+.service('MockDataParserService', MockDataParserService);

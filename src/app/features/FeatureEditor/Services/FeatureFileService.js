@@ -1,30 +1,32 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-
-// Module:
-var FeatureEditor = require('../FeatureEditor');
+import compose from 'lodash.compose';
 
 // Dependencies:
-var FileService = require('../../../Core/Services/FileService');
-require('./FeatureParserService');
-require('../../../Core/Services/FileStructureService');
+import angular from 'angular';
+import FeatureParserService from './FeatureParserService';
+import FileService from '../../../Core/Services/FileService';
+import FileStructureService from '../../../Core/Services/FileStructureService';
 
-var FeatureFileService = function FeatureFileService (
-    $http,
-    FeatureParserService,
-    fileStructureService
-) {
-    var service = FileService($http, FeatureParserService, fileStructureService, 'features');
-    var save = service.saveFile;
-    service.saveFile = _.compose(save, fixFeatureParameters);
-    return service;
-
-    function fixFeatureParameters (options) {
-        options.data = options.data.replace(/"</g, '\'<').replace(/>"/g, '>\'');
-        return options;
+class FeatureFileService extends FileService {
+    constructor (
+        $http,
+        featureParserService,
+        fileStructureService
+    ) {
+        super($http, featureParserService, fileStructureService, 'features');
+        this.saveFile = compose(this.saveFile, fixFeatureParameters);
     }
-};
+}
 
-FeatureEditor.service('FeatureFileService', FeatureFileService);
+function fixFeatureParameters (options) {
+    options.data = options.data.replace(/"</g, `'<`).replace(/>"/g, `>'`);
+    return options;
+}
+
+export default angular.module('featureFileService', [
+    FeatureParserService.name,
+    FileStructureService.name
+])
+.service('featureFileService', FeatureFileService);

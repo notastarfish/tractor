@@ -1,11 +1,12 @@
 'use strict';
 
 // Constants:
+import constants from './contants';
 import { config } from './config';
 
 // Utilities:
 import log from 'npmlog';
-import { join, resolve } from 'path';
+import path from 'path';
 
 // Dependencies:
 import bodyParser from 'body-parser';
@@ -35,7 +36,7 @@ function init () {
     /* eslint-enable new-cap */
     let sockets = io(server);
 
-    application.use(express.static(resolve(__dirname, '../www')));
+    application.use(express.static(path.resolve(__dirname, '../src')));
 
     application.use(bodyParser.json());
     application.use(bodyParser.urlencoded({
@@ -60,7 +61,12 @@ function init () {
     application.get('/config', require('./api/get-config').handler);
 
     application.get('*', (request, response) => {
-        response.sendFile(join(__dirname, '../www', 'index.html'));
+        let ext = path.extname(request.url);
+        if (ext) {
+            response.status(constants.FILE_NOT_FOUND_ERROR).end();
+        } else {
+            response.sendFile(path.join(__dirname, '../src', 'index.html'));
+        }
     });
 
     sockets.of('/run-protractor')

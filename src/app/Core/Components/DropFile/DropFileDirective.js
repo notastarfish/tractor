@@ -1,66 +1,62 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
+// Dependencies:
+import angular from 'angular';
 
-// Module:
-var Core = require('../../Core');
+class DropFileDirective {
+    constructor () {
+        this.restrict = 'A';
 
-var DropFileDirective = function () {
-    return {
-        restrict: 'A',
-
-        scope: {
+        this.scope = {
             onDrop: '&',
             dropDirectory: '='
-        },
+        }
+    }
 
-        link: link
-    };
-
-    function link ($scope, $element) {
-        var element = _.first($element);
+    link ($scope, $element) {
+        let [element] = $element;
 
         element.addEventListener('dragover', dragover);
         element.addEventListener('dragenter', dragenter);
         element.addEventListener('dragleave', dragleave);
-        element.addEventListener('drop', _.partial(drop, $scope));
+        element.addEventListener('drop', event => drop($scope, event));
     }
+}
 
-    function dragover (event) {
-        event.dataTransfer.dropEffect = 'move';
-        event.preventDefault();
-        event.stopPropagation();
-        Array.prototype.forEach.call(document.querySelectorAll('.dragover'), function (element) {
-            element.classList.remove('dragover');
-        });
-        this.classList.add('dragover');
-        return false;
-    }
+function dragover (event) {
+    event.dataTransfer.dropEffect = 'move';
+    event.preventDefault();
+    event.stopPropagation();
+    [].forEach.call(document.querySelectorAll('.dragover'), element => {
+        element.classList.remove('dragover');
+    });
+    this.classList.add('dragover');
+    return false;
+}
 
-    function dragenter () {
-        Array.prototype.forEach.call(document.querySelectorAll('.dragover'), function (element) {
-            element.classList.remove('dragover');
-        });
-        this.classList.add('dragover');
-        return false;
-    }
+function dragenter () {
+    [].forEach.call(document.querySelectorAll('.dragover'), element => {
+        element.classList.remove('dragover');
+    });
+    this.classList.add('dragover');
+    return false;
+}
 
-    function dragleave () {
-        this.classList.remove('dragover');
-        return false;
-    }
+function dragleave () {
+    this.classList.remove('dragover');
+    return false;
+}
 
-    function drop ($scope, event) {
-        event.preventDefault();
-        event.stopPropagation();
-        this.classList.remove('dragover');
-        var file = JSON.parse(event.dataTransfer.getData('file'));
-        var directory = $scope.dropDirectory;
-        var dropHandler = $scope.onDrop();
-        dropHandler(file, directory);
-        return false;
-    }
-};
+function drop ($scope, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.classList.remove('dragover');
+    let file = JSON.parse(event.dataTransfer.getData('file'));
+    let directory = $scope.dropDirectory;
+    let dropHandler = $scope.onDrop();
+    dropHandler(file, directory);
+    return false;
+}
 
-Core.directive('tractorDropFile', DropFileDirective);
+export default angular.module('tractorDropFile', [])
+.directive('tractorDropFile', DropFileDirective);

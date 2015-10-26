@@ -1,51 +1,48 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var fs = require('fs');
-
-// Module:
-var Core = require('../../Core');
+import changecase from 'change-case';
+import isUndefined from 'lodash.isundefined';
 
 // Dependencies:
-var camelcase = require('change-case').camel;
-require('../../Validators/ExampleNameValidator');
+import angular from 'angular';
+import ExampleNameValidator from '../../Validators/ExampleNameValidator';
+import template from './StepInput.html';
 
-var StepInputDirective = function () {
-    return {
-        restrict: 'E',
+class StepInputDirective {
+    constructor () {
+        this.restrict = 'E';
 
-        scope: {
+        this.scope = {
             model: '=',
             label: '@',
             example: '@'
-        },
+        };
 
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/StepInput.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        this.template = template;
+    }
 
-        link: link
-    };
-
-    function link ($scope, $element, $attrs) {
-        if (_.isUndefined($scope.model)) {
+    link ($scope, $element, $attrs) {
+        if (isUndefined($scope.model)) {
             throw new Error('The "tractor-step-input" directive requires a "model" attribute.');
         }
 
-        if (_.isUndefined($scope.label)) {
+        if (isUndefined($scope.label)) {
             throw new Error('The "tractor-step-input" directive requires a "label" attribute.');
         }
 
-        if (_.isUndefined($attrs.form)) {
+        if (isUndefined($attrs.form)) {
             throw new Error('The "tractor-step-input" directive requires a "form" attribute.');
         }
 
         $scope.form = $scope.$parent[$attrs.form];
         $scope.id = Math.floor(Math.random() * Date.now());
 
-        $scope.property = camelcase($scope.label);
+        $scope.property = changecase.camel($scope.label);
     }
-};
+}
 
-Core.directive('tractorStepInput', StepInputDirective);
+export default angular.module('tractorStepInput', [
+    ExampleNameValidator.name
+])
+.directive('tractorStepInput', StepInputDirective);

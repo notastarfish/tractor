@@ -76,7 +76,7 @@ describe('server/api: copy-file:', () => {
                 path: filePath
             }
         };
-        let response = { };
+        let response = {};
 
         sinon.stub(fileStructure, 'copyFile').returns(Promise.reject(error));
         sinon.stub(errorHandler, 'handler');
@@ -99,7 +99,7 @@ describe('server/api: copy-file:', () => {
                 path: filePath
             }
         };
-        let response = { };
+        let response = {};
 
         sinon.stub(fileStructure, 'copyFile').returns(Promise.reject(error));
         sinon.stub(errorHandler, 'handler');

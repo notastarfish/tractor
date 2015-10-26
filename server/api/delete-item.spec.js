@@ -76,7 +76,7 @@ describe('server/api: delete-item:', () => {
                 path: filePath
             }
         };
-        let response = { };
+        let response = {};
 
         sinon.stub(fileStructure, 'deleteItem').returns(Promise.reject(error));
         sinon.stub(errorHandler, 'handler');
@@ -99,7 +99,7 @@ describe('server/api: delete-item:', () => {
                 path: filePath
             }
         };
-        let response = { };
+        let response = {};
 
         sinon.stub(fileStructure, 'deleteItem').returns(Promise.reject(error));
         sinon.stub(errorHandler, 'handler');

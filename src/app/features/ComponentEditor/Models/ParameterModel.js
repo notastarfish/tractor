@@ -1,67 +1,56 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
+import changecase from 'change-case';
 
 // Dependencies:
-var camelcase = require('change-case').camel;
-require('../../../Core/Services/ASTCreatorService');
+import angular from 'angular';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
 
-var createParameterModelConstructor = function (
+function createParameterModelConstructor (
     astCreatorService
 ) {
-    var ParameterModel = function ParameterModel (action) {
-        Object.defineProperties(this, {
-            action: {
-                get: function () {
-                    return action;
-                }
-            },
-            variableName: {
-                get: function () {
-                    return camelcase(this.name);
-                }
-            },
-            meta: {
-                get: function () {
-                    return {
-                        name: this.name
-                    };
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            }
-        });
+    const action = Symbol();
 
-        this.name = '';
-    };
+    return class ParameterModel {
+        constructor (_action) {
+            this[action] = _action;
 
-    ParameterModel.prototype.getAllVariableNames = function () {
-        var currentParameter = this;
-        return _.chain(this.action.parameters)
-        .reject(function (parameter) {
-            return parameter === currentParameter;
-        }).map(function (object) {
-            return object.name;
-        }).compact().value();
-    };
+            this.name = '';
+        }
 
-    return ParameterModel;
+        get action () {
+            return this[action];
+        }
+
+        get variableName () {
+            return changecase.camel(this.name);
+        }
+
+        get meta () {
+            return {
+                name: this.name
+            };
+        }
+
+        get ast () {
+            return toAST.call(this);
+        }
+
+        getAllVariableNames () {
+            let currentParameter = this;
+            return this.action.parameters
+            .filter((parameter) => parameter !== currentParameter)
+            .map((object) => object.name);
+        }
+    }
 
     function toAST () {
-        var ast = astCreatorService;
-        return ast.identifier(this.variableName);
+        return astCreatorService.identifier(this.variableName);
     }
-};
+}
 
-ComponentEditor.factory('ParameterModel', function (
-    astCreatorService
-) {
-    return createParameterModelConstructor(astCreatorService);
-});
+export default angular.module('parameterModel', [
+    ASTCreatorService.name
+])
+.factory('ParameterModel', createParameterModelConstructor);

@@ -28,7 +28,7 @@ describe('RealTimeService.js:', function () {
         angular.mock.module('Core');
 
         angular.mock.module(function ($provide) {
-            config = { };
+            config = {};
             $provide.factory('config', function () {
                 return config;
             });

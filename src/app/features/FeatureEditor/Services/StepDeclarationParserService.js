@@ -1,24 +1,27 @@
 'use strict';
 
-// Module:
-var FeatureEditor = require('../FeatureEditor');
-
 // Dependencies
-require('../Models/StepDeclarationModel');
+import angular from 'angular';
+import StepDeclarationModel from '../Models/StepDeclarationModel';
 
-var StepDeclarationParserService = function ExampleParserService (StepDeclarationModel) {
-    return {
-        parse: parse
-    };
+class StepDeclarationParserService {
+    constructor (
+        StepDeclarationModel
+    ) {
+        this.StepDeclarationModel = StepDeclarationModel;
+    }
 
-    function parse (tokens) {
-        var stepDeclaration = new StepDeclarationModel();
+    parse (tokens) {
+        let stepDeclaration = new this.StepDeclarationModel();
 
         stepDeclaration.type = tokens.type;
         stepDeclaration.step = tokens.step;
 
         return stepDeclaration;
     }
-};
+}
 
-FeatureEditor.service('StepDeclarationParserService', StepDeclarationParserService);
+export default angular.module('stepDeclarationParserService', [
+    StepDeclarationModel.name
+])
+.service('StepDeclarationParserService', StepDeclarationParserService);

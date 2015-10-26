@@ -1,50 +1,46 @@
 'use strict';
 
-// Module:
-var MockDataEditor = require('../MockDataEditor');
+// Dependencies:
+import angular from 'angular';
 
-var createMockDataModelConstructor = function () {
-    var MockDataModel = function MockDataModel (json, options) {
-        json = json || '{}';
+function createMockDataModelConstructor () {
+    const json = Symbol();
 
-        this.name = '';
+    return class MockDataModel {
+        constructor (_json = '{}', options = {}) {
+            this[json] = json;
+            this.options = options;
 
-        Object.defineProperties(this, {
-            isSaved: {
-                get: function () {
-                    return !!(options && options.isSaved);
-                }
-            },
-            path: {
-                get: function () {
-                    return options && options.path;
-                }
-            },
-            json: {
-                get: function () {
-                    var formatted;
-                    try {
-                        formatted = JSON.stringify(JSON.parse(json), null, '    ');
-                    } catch (e) {
-                        formatted = json;
-                    }
-                    return formatted;
-                },
-                set: function (newVal) {
-                    json = newVal;
-                }
-            },
-            data: {
-                get: function () {
-                    return this.json;
-                }
+            this.name = '';
+        }
+
+        get isSaved () {
+            return !!this.options.isSaved;
+        }
+
+        get path () {
+            return this.options.path;
+        }
+
+        get json () {
+            let formatted;
+            try {
+                formatted = JSON.stringify(JSON.parse(this[json]), null, '    ');
+            } catch (e) {
+                formatted = json;
             }
-        });
+            return formatted;
+        }
+
+        set function (newJSON) {
+            this[json] = newJSON;
+        }
+
+        get data () {
+            return this.json;
+        }
     };
+}
 
-    return MockDataModel;
-};
-
-MockDataEditor.factory('MockDataModel', function () {
-    return createMockDataModelConstructor();
-});
+export default angular.module('mockDataModel', [])
+.factory('MockDataModel', createMockDataModelConstructor);

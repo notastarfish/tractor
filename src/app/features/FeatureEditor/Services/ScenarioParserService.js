@@ -1,36 +1,35 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var assert = require('assert');
-
-// Module:
-var FeatureEditor = require('../FeatureEditor');
+import assert from 'assert';
 
 // Dependencies:
-require('./StepDeclarationParserService');
-require('./ExampleParserService');
-require('../Models/ScenarioModel');
+import angular from 'angular';
+import ExampleParserService from './ExampleParserService';
+import ScenarioModel from '../Models/ScenarioModel';
+import StepDeclarationParserService from './StepDeclarationParserService';
 
-var ScenarioParserService = function ScenarioParserService (
-    StepDeclarationParserService,
-    ExampleParserService,
-    ScenarioModel
-) {
-    return {
-        parse: parse
-    };
+class ScenarioParserService {
+    constructor (
+        exampleParserService,
+        ScenarioModel,
+        stepDeclarationParserService
+    ) {
+        this.exampleParserService = exampleParserService;
+        this.ScenarioModel = ScenarioModel;
+        this.stepDeclarationParserService = stepDeclarationParserService;
+    }
 
-    function parse (feature, tokens) {
-        var scenario = new ScenarioModel();
+    parse (feature, tokens) {
+        let scenario = new this.ScenarioModel();
 
         scenario.name = tokens.name;
 
-        _.each(tokens.stepDeclarations, function (stepDeclaration, index) {
-            var notStep = false;
+        tokens.stepDeclarations.forEach((stepDeclaration, index) => {
+            let notStep = false;
 
             try {
-                var parsedStepDeclaration = StepDeclarationParserService.parse(stepDeclaration);
+                let parsedStepDeclaration = this.stepDeclarationParserService.parse(stepDeclaration);
                 assert(parsedStepDeclaration);
                 scenario.stepDeclarations.push(parsedStepDeclaration);
             } catch (e) {
@@ -42,14 +41,13 @@ var ScenarioParserService = function ScenarioParserService (
             }
         });
 
-        _.each(tokens.examples, function (example, index) {
-            var notExample = false;
+        tokens.examples.forEach((example, index) => {
+            let notExample = false;
 
             try {
-                var parsedExample = ExampleParserService.parse(scenario, example);
+                let parsedExample = this.exampleParserService.parse(scenario, example);
                 assert(parsedExample);
                 scenario.examples.push(parsedExample);
-
             } catch (e) {
                 notExample = true;
             }
@@ -61,6 +59,11 @@ var ScenarioParserService = function ScenarioParserService (
 
         return scenario;
     }
-};
+}
 
-FeatureEditor.service('ScenarioParserService', ScenarioParserService);
+export default angular.module('scenarioParserService', [
+    ExampleParserService.name,
+    ScenarioModel.name,
+    StepDeclarationParserService.name
+])
+.service('ScenarioParserService', ScenarioParserService);

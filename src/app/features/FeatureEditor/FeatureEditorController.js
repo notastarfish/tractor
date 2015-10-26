@@ -1,40 +1,43 @@
 'use strict';
 
-// Module:
-var FeatureEditor = require('./FeatureEditor');
-
 // Dependencies:
-var FileEditorController = require('../FileEditor/FileEditorController');
-require('../../Core/Services/ConfirmDialogService');
-require('../../Core/Services/PersistentStateService');
-require('../../Core/Components/Notifier/NotifierService');
-require('./Services/FeatureFileService');
-require('./Models/FeatureModel');
+import angular from 'angular';
+import ConfirmDialogService from '../../Core/Services/ConfirmDialogService';
+import FeatureFileService from './Services/FeatureFileService';
+import FeatureModel from './Models/FeatureModel';
+import FileEditorController from '../FileEditor/FileEditorController';
+import NotifierService from '../../Core/Components/Notifier/NotifierService';
+import PersistentStateService from '../../Core/Services/PersistentStateService';
 
-var FeatureEditorController = function FeatureEditorController (
-    $scope,
-    $window,
-    $state,
-    confirmDialogService,
-    persistentStateService,
-    notifierService,
-    FeatureFileService,
-    FeatureModel,
-    featureFileStructure,
-    featurePath
-) {
-    return new FileEditorController(
-        $scope,
-        $window,
+class FeatureEditorController extends FileEditorController {
+    constructor (
         $state,
         confirmDialogService,
         persistentStateService,
         notifierService,
-        FeatureFileService,
+        featureFileService,
         FeatureModel,
         featureFileStructure,
         featurePath
-    );
-};
+    ) {
+        super(
+            $state,
+            confirmDialogService,
+            persistentStateService,
+            notifierService,
+            FeatureFileService,
+            FeatureModel,
+            featureFileStructure,
+            featurePath
+        );
+    }
+}
 
-FeatureEditor.controller('FeatureEditorController', FeatureEditorController);
+export default angular.module('featureEditorController', [
+    ConfirmDialogService.name,
+    FeatureFileService.name,
+    FeatureModel.name,
+    NotifierService.name,
+    PersistentStateService.name
+])
+.controller('FeatureEditorController', FeatureEditorController);

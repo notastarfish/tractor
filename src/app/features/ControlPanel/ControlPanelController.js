@@ -1,17 +1,12 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-
-// Module:
-var ControlPanel = require('./ControlPanel');
-
 // Dependencies:
-require('./Services/RunnerService');
-require('./Services/ServerStatusService');
+import angular from 'angular';
+import RunnerService from './Services/RunnerService';
+import ServerStatusService from './Services/ServerStatusService';
 
-var ControlPanelController = (function () {
-    var ControlPanelController = function ControlPanelController (
+class ControlPanelController {
+    constructor (
         runnerService,
         serverStatusService,
         config
@@ -19,20 +14,23 @@ var ControlPanelController = (function () {
         this.runnerService = runnerService;
         this.serverStatusService = serverStatusService;
         this.environments = config.environments;
-        this.environment = _.first(this.environments);
-    };
+        let [environment] = this.environments
+        this.environment = environment;
+    }
 
-    ControlPanelController.prototype.runProtractor = function () {
+    runProtractor () {
         this.runnerService.runProtractor({
             baseUrl: this.environment
         });
-    };
+    }
 
-    ControlPanelController.prototype.isServerRunning = function () {
+    isServerRunning () {
         return this.serverStatusService.isServerRunning();
-    };
+    }
+}
 
-    return ControlPanelController;
-})();
-
-ControlPanel.controller('ControlPanelController', ControlPanelController);
+export default angular.module('controlPanelController', [
+    RunnerService.name,
+    ServerStatusService.name
+])
+.controller('ControlPanelController', ControlPanelController);

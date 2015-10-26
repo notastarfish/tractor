@@ -1,19 +1,23 @@
 'use strict';
 
-// Module:
-var ComponentEditor = require('../ComponentEditor');
-
 // Dependencies:
-var FileService = require('../../../Core/Services/FileService');
-require('./ComponentParserService');
-require('../../../Core/Services/FileStructureService');
+import angular from 'angular';
+import ComponentParserService from './ComponentParserService';
+import FileService from '../../../Core/Services/FileService';
+import FileStructureService from '../../../Core/Services/FileStructureService';
 
-var ComponentFileService = function ComponentFileService (
-    $http,
-    ComponentParserService,
-    fileStructureService
-) {
-    return FileService($http, ComponentParserService, fileStructureService, 'components');
-};
+class ComponentFileService extends FileService {
+    constructor (
+        $http,
+        componentParserService,
+        fileStructureService
+    ) {
+        super($http, componentParserService, fileStructureService, 'components');
+    }
+}
 
-ComponentEditor.service('ComponentFileService', ComponentFileService);
+export default angular.module('componentFileService', [
+    ComponentParserService.name,
+    FileStructureService.name
+])
+.service('ComponentFileService', ComponentFileService);

@@ -1,20 +1,17 @@
 'use strict';
 
-// Module:
-var Core = require('../../Core');
+// Dependencies:
+import angular from 'angular';
 
-var ConfirmDialogController = (function () {
-    var ConfirmDialogController = function ConfirmDialogController () { };
-
-    ConfirmDialogController.prototype.ok = function () {
+class ConfirmDialogController {
+    ok () {
         this.trigger.resolve();
-    };
+    }
 
-    ConfirmDialogController.prototype.cancel = function () {
+    cancel () {
         this.trigger.reject();
-    };
+    }
+}
 
-    return ConfirmDialogController;
-})();
-
-Core.controller('ConfirmDialogController', ConfirmDialogController);
+export default angular.module('confirmDialogController', [])
+.controller('ConfirmDialogController', ConfirmDialogController);

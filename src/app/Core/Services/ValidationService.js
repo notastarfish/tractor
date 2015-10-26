@@ -1,19 +1,16 @@
 'use strict';
 
-// Module:
-var Core = require('../Core');
+// Utilities:
+import charFunk from 'charfunk';
 
 // Dependencies:
-var charFunk = require('charfunk');
+import angular from 'angular';
 
-var ValidationService = function () {
-    return {
-        validateVariableName: validateVariableName
-    };
-
-    function validateVariableName (variableName) {
+class ValidationService {
+    validateVariableName (variableName) {
         return charFunk.isValidName(variableName, true) ? variableName : false;
     }
-};
+}
 
-Core.service('validationService', ValidationService);
+export default angular.module('validationService', [])
+.service('validationService', ValidationService);

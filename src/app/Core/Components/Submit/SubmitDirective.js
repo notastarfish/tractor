@@ -1,32 +1,29 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var fs = require('fs');
+import isUndefined from 'lodash.isundefined';
 
-// Module:
-var Core = require('../../Core');
+// Dependencies:
+import angular from 'angular';
+import template from './Submit.html';
 
-var SubmitDirective = function () {
-    return {
-        restrict: 'E',
+class SubmitDirective {
+    constructor () {
+        this.restrict = 'E';
 
-        scope: {
+        this.scope = {
             action: '@'
-        },
+        };
 
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/Submit.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        this.template = template;
+    }
 
-        link: link
-    };
-
-    function link ($scope) {
-        if (_.isUndefined($scope.action)) {
+    link ($scope) {
+        if (isUndefined($scope.action)) {
             throw new Error('The "tractor-submit" directive requires an "action" attribute.');
         }
     }
-};
+}
 
-Core.directive('tractorSubmit', SubmitDirective);
+export default angular.module('tractorSubmit', [])
+.directive('tractorSubmit', SubmitDirective);

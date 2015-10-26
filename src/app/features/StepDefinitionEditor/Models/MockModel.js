@@ -1,61 +1,55 @@
 'use strict';
 
-// Utilities;
-var _ = require('lodash');
-
-// Module:
-var StepDefinitionEditor = require('../StepDefinitionEditor');
-
 // Dependencies:
-require('../../../Core/Services/ASTCreatorService');
+import angular from 'angular';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
 
-var createMockModelConstructor = function (
+function createMockModelConstructor (
     astCreatorService
 ) {
-    var MockModel = function MockModel (step) {
-        Object.defineProperties(this, {
-            step: {
-                get: function () {
-                    return step;
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            }
-        });
+    const step = Symbol();
 
-        this.url = '';
-        this.action = _.first(this.actions);
-        this.data = _.first(this.step.stepDefinition.mockDataInstances);
-        this.passThrough = false;
-    };
+    return class MockModel {
+        constructor (_step) {
+            this[step] = _step;
 
-    MockModel.prototype.actions = ['GET', 'POST', 'DELETE', 'PUT', 'HEAD', 'PATCH'];
+            this.actions = ['GET', 'POST', 'DELETE', 'PUT', 'HEAD', 'PATCH'];
+            let [action] = this.actions;
+            this.action = action;
 
-    return MockModel;
+            let [instance] = this.step.stepDefinition.mockDataInstances;
+            this.data = instance;
+
+            this.passThrough = false;
+            this.url = '';
+        }
+
+        get step () {
+            return this[step];
+        }
+
+        get ast () {
+            return toAST.call(this);
+        }
+    }
 
     function toAST () {
-        var ast = astCreatorService;
-
-        var data = {
-            url: ast.literal(new RegExp(this.url))
+        let data = {
+            url: astCreatorService.literal(new RegExp(this.url))
         };
-        var template = 'httpBackend.when' + this.action + '(%= url %)';
+        let template = `httpBackend.when${this.action}(%= url %)`;
         if (this.passThrough) {
             template += '.passThrough(); ';
         } else {
             template += '.respond(%= dataName %); ';
-            data.dataName = ast.identifier(this.data.variableName);
+            data.dataName = astCreatorService.identifier(this.data.variableName);
         }
 
-        return ast.template(template, data);
+        return astCreatorService.template(template, data);
     }
-};
+}
 
-StepDefinitionEditor.factory('MockModel', function (
-    astCreatorService
-) {
-    return createMockModelConstructor(astCreatorService);
-});
+export default angular.module('mockModel', [
+    ASTCreatorService.name
+])
+.factory('MockModel', createMockModelConstructor);

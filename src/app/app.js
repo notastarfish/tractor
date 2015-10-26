@@ -1,77 +1,124 @@
 'use strict';
 
+// Styles:
+import 'styles/style.scss!';
+
 // Utilities:
-var _ = require('lodash');
-var fs = require('fs');
-var Promise = require('bluebird');
+import isString from 'lodash.isstring';
+import Promise from 'bluebird';
 
 // Dependencies:
-var angular = require('angular');
-require('angular-sanitize');
-require('angular-messages');
-require('angular-mocks');
-require('angular-ui-router');
-require('angular-sortable');
-require('angular-local-storage');
+import angular from 'angular';
+import 'angular-local-storage';
+import 'angular-messages';
+import 'angular-mocks';
+import 'angular-sanitize';
+import 'angular-sortable';
+import 'angular-ui-router';
 
-require('./features/ControlPanel/ControlPanel');
-require('./features/ControlPanel/ControlPanelController');
+import ActionDirective from './Core/Components/Action/ActionDirective';
+import CheckboxDirective from './Core/Components/Checkbox/CheckboxDirective';
+import ConfirmDialogDirective from './Core/Components/ConfirmDialog/ConfirmDialogDirective';
+import DragFileDirective from './Core/Components/DragFile/DragFileDirective';
+import DropFileDirective from './Core/Components/DropFile/DropFileDirective';
+import FileTreeDirective from './Core/Components/FileTree/FileTreeDirective';
+import GiveFocusDirective from './Core/Components/GiveFocus/GiveFocusDirective';
+import LiteralInputDirective from './Core/Components/LiteralInput/LiteralInputDirective';
+import NotifierDirective from './Core/Components/Notifier/NotifierDirective';
+import PanelHandleDirective from './Core/Components/PanelHandle/PanelHandleDirective';
+import SelectInputDirective from './Core/Components/SelectInput/SelectInputDirective';
+import StepInputDirective from './Core/Components/StepInput/StepInputDirective';
+import SubmitDirective from './Core/Components/Submit/SubmitDirective';
+import TextInputDirective from './Core/Components/TextInput/TextInputDirective';
+import VariableInputDirective from './Core/Components/VariableInput/VariableInputDirective';
 
-require('./features/ComponentEditor/ComponentEditor');
-require('./features/ComponentEditor/ComponentEditorController');
-require('./features/ComponentEditor/Services/ComponentFileService');
+import ExampleNameValidator from './Core/Validators/ExampleNameValidator';
+import FileNameValidator from './Core/Validators/FileNameValidator';
+import VariableNameValidator from './Core/Validators/VariableNameValidator';
 
-require('./features/FeatureEditor/FeatureEditor');
-require('./features/FeatureEditor/FeatureEditorController');
-require('./features/FeatureEditor/Services/FeatureFileService');
+import FileStructureService from './Core/Services/FileStructureService';
+import HttpResponseInterceptor from './Core/Services/HttpResponseInterceptor';
+import RealTimeService from './Core/Services/RealTimeService';
 
-require('./features/StepDefinitionEditor/Services/StepDefinitionFileService');
-require('./features/StepDefinitionEditor/StepDefinitionEditorController');
+import ControlPanelController from './features/ControlPanel/ControlPanelController';
+import controlPanelTemplate from './features/ControlPanel/ControlPanel.html';
 
-require('./features/MockDataEditor/Services/MockDataFileService');
-require('./features/MockDataEditor/MockDataEditorController');
+import ComponentEditorController from './features/ComponentEditor/ComponentEditorController';
+import ComponentFileService from './features/ComponentEditor/Services/ComponentFileService';
+import componentEditorTemplate from './features/ComponentEditor/ComponentEditor.html';
 
-require('./Core/Core');
-require('./Core/Services/FileStructureService');
-require('./Core/Services/HttpResponseInterceptor');
-require('./Core/Services/RealTimeService');
+import FeatureEditorController from './features/FeatureEditor/FeatureEditorController';
+import FeatureFileService from './features/FeatureEditor/Services/FeatureFileService';
+import featureEditorTemplate from './features/FeatureEditor/FeatureEditor.html';
+
+import MockDataEditorController from './features/MockDataEditor/MockDataEditorController';
+import MockDataFileService from './features/MockDataEditor/Services/MockDataFileService';
+import mockDataEditorTemplate from './features/MockDataEditor/MockDataEditor.html';
+
+import StepDefinitionEditorController from './features/StepDefinitionEditor/StepDefinitionEditorController';
+import StepDefinitionFileService from './features/StepDefinitionEditor/Services/StepDefinitionFileService';
+import stepDefinitionEditorTemplate from './features/StepDefinitionEditor/StepDefinitionEditor.html';
 
 // Application Init:
-var tractor = angular.module('tractor', [
+let tractor = angular.module('tractor', [
     'ngMessages',
     'ui.router',
     'ui.sortable',
     'LocalStorageModule',
-    'Core',
-    'ControlPanel',
-    'ComponentEditor',
-    'FeatureEditor',
-    'StepDefinitionEditor',
-    'MockDataEditor'
+    ActionDirective.name,
+    CheckboxDirective.name,
+    ConfirmDialogDirective.name,
+    DragFileDirective.name,
+    DropFileDirective.name,
+    FileTreeDirective.name,
+    GiveFocusDirective.name,
+    LiteralInputDirective.name,
+    NotifierDirective.name,
+    PanelHandleDirective.name,
+    SelectInputDirective.name,
+    StepInputDirective.name,
+    SubmitDirective.name,
+    TextInputDirective.name,
+    VariableInputDirective.name,
+    ExampleNameValidator.name,
+    FileNameValidator.name,
+    VariableNameValidator.name,
+    FileStructureService.name,
+    HttpResponseInterceptor.name,
+    RealTimeService.name,
+    ControlPanelController.name,
+    ComponentEditorController.name,
+    ComponentFileService.name,
+    FeatureEditorController.name,
+    FeatureFileService.name,
+    MockDataEditorController.name,
+    MockDataFileService.name,
+    StepDefinitionEditorController.name,
+    StepDefinitionFileService.name
 ]);
 
-tractor.config(function (
+tractor.config((
     $stateProvider,
     $locationProvider,
     $urlMatcherFactoryProvider,
     $urlRouterProvider,
     localStorageServiceProvider
-) {
+) => {
     $urlRouterProvider.otherwise('/');
     $locationProvider.html5Mode(true);
     localStorageServiceProvider.setPrefix('tractor');
 
     $urlMatcherFactoryProvider.type('TractorFile', {
-        encode: function (toEncode) {
+        encode (toEncode) {
             return toEncode && toEncode.name ? toEncode.name.replace(/\s/g, '+') : '';
         },
-        decode: function (toDecode) {
-            return toDecode && _.isString(toDecode) ? { name: toDecode.replace(/\+/g, ' ') } : toDecode;
+        decode (toDecode) {
+            return toDecode && isString(toDecode) ? { name: toDecode.replace(/\+/g, ' ') } : toDecode;
         },
-        is: function (tractorFile) {
+        is (tractorFile) {
             return !tractorFile || tractorFile && tractorFile.name;
         },
-        equals: function (a, b) {
+        equals (a, b) {
             return a && a.name && b && b.name && a.name === b.name;
         }
     });
@@ -79,86 +126,76 @@ tractor.config(function (
     $stateProvider
     .state('tractor', {
         url: '/',
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/features/ControlPanel/ControlPanel.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        template: controlPanelTemplate,
         controller: 'ControlPanelController as controlPanel'
     })
     .state('tractor.components', {
         url: 'components/{file:TractorFile}',
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/features/ComponentEditor/ComponentEditor.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        template: componentEditorTemplate,
         controller: 'ComponentEditorController as componentEditor',
         resolve: {
-            componentFileStructure: function (ComponentFileService) {
+            componentFileStructure (ComponentFileService) {
                 return ComponentFileService.getFileStructure();
             },
-            componentPath: function ($stateParams, ComponentFileService) {
-                var componentName = $stateParams.file && $stateParams.file.name;
-                return componentName ? ComponentFileService.getPath({ name: componentName }) : null;
+            componentPath ($stateParams, ComponentFileService) {
+                let name = $stateParams.file && $stateParams.file.name;
+                return name ? ComponentFileService.getPath({ name }) : null;
             }
         }
     })
     .state('tractor.features', {
         url: 'features/{file:TractorFile}',
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/features/FeatureEditor/FeatureEditor.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        template: featureEditorTemplate,
         controller: 'FeatureEditorController as featureEditor',
         resolve: {
-            featureFileStructure: function (FeatureFileService) {
+            featureFileStructure (FeatureFileService) {
                 return FeatureFileService.getFileStructure();
             },
-            featurePath: function ($stateParams, FeatureFileService) {
-                var featureName = $stateParams.file && $stateParams.file.name;
-                return featureName ? FeatureFileService.getPath({ name: featureName }) : null;
+            featurePath ($stateParams, FeatureFileService) {
+                let name = $stateParams.file && $stateParams.file.name;
+                return name ? FeatureFileService.getPath({ name }) : null;
             }
         }
     })
     .state('tractor.mock-data', {
         url: 'mock-data/{file:TractorFile}',
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/features/MockDataEditor/MockDataEditor.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        template: mockDataEditorTemplate,
         controller: 'MockDataEditorController as mockDataEditor',
         resolve: {
-            mockDataFileStructure: function (MockDataFileService) {
+            mockDataFileStructure (MockDataFileService) {
                 return MockDataFileService.getFileStructure();
             },
-            mockDataPath: function ($stateParams, MockDataFileService) {
-                var mockDataName = $stateParams.file && $stateParams.file.name;
-                return mockDataName ? MockDataFileService.getPath({ name: mockDataName }) : null;
+            mockDataPath ($stateParams, MockDataFileService) {
+                let name = $stateParams.file && $stateParams.file.name;
+                return name ? MockDataFileService.getPath({ name }) : null;
             }
         }
     })
     .state('tractor.step-definitions', {
         url: 'step-definitions/{file:TractorFile}',
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/features/StepDefinitionEditor/StepDefinitionEditor.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        template: stepDefinitionEditorTemplate,
         controller: 'StepDefinitionEditorController as stepDefinitionEditor',
         resolve: {
-            stepDefinitionFileStructure: function (StepDefinitionFileService) {
+            stepDefinitionFileStructure (StepDefinitionFileService) {
                 return StepDefinitionFileService.getFileStructure();
             },
-            stepDefinitionPath: function ($stateParams, StepDefinitionFileService) {
-                var stepDefinitionName = $stateParams.file && $stateParams.file.name;
-                return stepDefinitionName ? StepDefinitionFileService.getPath({ name: stepDefinitionName }) : null;
+            stepDefinitionPath ($stateParams, StepDefinitionFileService) {
+                let name = $stateParams.file && $stateParams.file.name;
+                return name ? StepDefinitionFileService.getPath({ name }) : null;
             }
         }
     });
 })
-.run(function ($rootScope) {
+.run(($rootScope) => {
     Promise.longStackTraces();
-    Promise.setScheduler(function (cb) {
-        $rootScope.$evalAsync(cb);
+    Promise.setScheduler((callback) => {
+        $rootScope.$evalAsync(callback);
     });
 });
 
-var $http = angular.injector(['ng']).get('$http');
+let $http = angular.injector(['ng']).get('$http');
 $http.get('/config')
-.then(function (response) {
+.then((response) => {
     tractor.constant('config', response.data);
     angular.bootstrap(document.body, ['tractor'], {
         strictDi: true

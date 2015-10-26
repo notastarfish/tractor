@@ -1,25 +1,20 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
+// Dependencies:
+import angular from 'angular';
 
-// Module:
-var Core = require('../../Core');
+class GiveFocusDirective {
+    constructor () {
+        this.restrict = 'A';
 
-var GiveFocusDirective = function () {
-    return {
-        restrict: 'A',
-
-        scope: {
+        this.scope = {
             focusOn: '='
-        },
+        };
+    }
 
-        link: link
-    };
-
-    function link ($scope, $element) {
-        $scope.$watch('focusOn', function (currentValue) {
-            var input = _.first($element);
+    link ($scope, $element) {
+        $scope.$watch('focusOn', currentValue => {
+            let [input] = $element;
             if (currentValue) {
                 input.focus();
                 input.select();
@@ -28,6 +23,7 @@ var GiveFocusDirective = function () {
             }
         });
     }
-};
+}
 
-Core.directive('tractorGiveFocus', GiveFocusDirective);
+export default angular.module('tractorGiveFocus', [])
+.directive('tractorGiveFocus', GiveFocusDirective);

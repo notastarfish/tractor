@@ -75,7 +75,7 @@ describe('server/cli/init: index:', () => {
         sinon.stub(log, 'info');
 
         return cliInit()
-        .catch(() => { })
+        .catch(() => {})
         .then(() => {
             expect(log.error).to.have.been.calledWith('Something broke, sorry :(');
             expect(log.error).to.have.been.calledWith(message);

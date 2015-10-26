@@ -5,3 +5,4 @@ reports
 *.scssc
 .idea/*
 .sass-cache
+src/jspm_packages

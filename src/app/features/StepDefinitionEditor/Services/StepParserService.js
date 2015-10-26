@@ -1,39 +1,39 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var assert = require('assert');
-
-// Module:
-var StepDefinitionEditor = require('../StepDefinitionEditor');
+import assert from 'assert';
 
 // Dependencies:
-require('../Services/MockParserService');
-require('../Services/TaskParserService');
-require('../Services/ExpectationParserService');
-require('../Models/StepModel');
+import angular from 'angular';
+import ExpectationParserService from '../Services/ExpectationParserService';
+import MockParserService from '../Services/MockParserService';
+import StepModel from '../Models/StepModel';
+import TaskParserService from '../Services/TaskParserService';
 
-var StepParserService = function StepParserService (
-    MockParserService,
-    TaskParserService,
-    ExpectationParserService,
-    StepModel
-) {
-    return {
-        parse: parse
-    };
+class StepParserService {
+    constructor (
+        expectationParserService,
+        mockParserService,
+        StepModel,
+        taskParserService
+    ) {
+        this.expectationParserService = expectationParserService;
+        this.mockParserService = mockParserService;
+        this.StepModel = StepModel;
+        this.taskParserService = taskParserService;
+    }
 
-    function parse (stepDefinition, ast) {
+    parse (stepDefinition, ast) {
         try {
-            var step = new StepModel(stepDefinition);
+            let step = new this.StepModel(stepDefinition);
 
-            var stepCallExpression = ast.expression;
+            let stepCallExpression = ast.expression;
             step.type = parseType(step, stepCallExpression);
             step.regex = parseRegex(step, stepCallExpression);
 
-            var stepFunction = _.last(ast.expression.arguments);
-            var statements = stepFunction.body.body;
-            var parsers = [parseMock, parseTask, parseExpectation, parsePending, parseMockDone, parseTaskDone];
+            let [stepFunction] = ast.expression.arguments.reverse();
+            let statements = stepFunction.body.body;
+            let parsers = [parseMock, parseTask, parseExpectation, parsePending, parseMockDone, parseTaskDone];
             tryParse(step, statements, parsers);
 
             return step;
@@ -42,77 +42,83 @@ var StepParserService = function StepParserService (
             return null;
         }
     }
+}
 
-    function parseType (step, stepCallExpression) {
-        var type = stepCallExpression.callee.property.name;
-        assert(_.contains(step.stepTypes, type));
-        return type;
-    }
+function parseType (step, stepCallExpression) {
+    let type = stepCallExpression.callee.property.name;
+    assert(step.stepTypes.includes(type));
+    return type;
+}
 
-    function parseRegex (step, stepCallExpression) {
-        var stepRegexArgument = _.first(stepCallExpression.arguments);
-        var regex = stepRegexArgument.raw.replace(/^\//, '').replace(/\/$/, '');
-        assert(regex);
-        return new RegExp(regex);
-    }
+function parseRegex (step, stepCallExpression) {
+    let [stepRegexArgument] = stepCallExpression.arguments;
+    let regex = stepRegexArgument.raw.replace(/^\//, '').replace(/\/$/, '');
+    assert(regex);
+    return new RegExp(regex);
+}
 
-    function tryParse (step, statements, parsers) {
-        statements.map(function (statement) {
-            var parsed = parsers.some(function (parser) {
-                try {
-                    return parser(step, statement);
-                } catch (e) { }
-            });
-            if (!parsed) {
-                throw new Error();
-            }
+function tryParse (step, statements, parsers) {
+    statements.map(statement => {
+        let parsed = parsers.some(parser => {
+            try {
+                return parser(step, statement);
+            } catch (e) {}
         });
-    }
+        if (!parsed) {
+            throw new Error();
+        }
+    });
+}
 
-    function parseMock (step, statement) {
-        var httpBackendOnloadMemberExpression = statement.expression.callee.object.callee;
-        assert(httpBackendOnloadMemberExpression.object.name === 'httpBackend');
-        assert(httpBackendOnloadMemberExpression.property.name.indexOf('when') === 0);
-        var mock = MockParserService.parse(step, statement);
-        assert(mock);
-        step.mocks.push(mock);
-        return true;
-    }
+function parseMock (step, statement) {
+    let httpBackendOnloadMemberExpression = statement.expression.callee.object.callee;
+    assert(httpBackendOnloadMemberExpression.object.name === 'httpBackend');
+    assert(httpBackendOnloadMemberExpression.property.name.indexOf('when') === 0);
+    let mock = MockParserService.parse(step, statement);
+    assert(mock);
+    step.mocks.push(mock);
+    return true;
+}
 
-    function parseTask (step, statement) {
-        var tasksDeclaration = _.first(statement.declarations);
-        assert(tasksDeclaration.id.name === 'tasks');
-        TaskParserService.parse(step, tasksDeclaration.init);
-        return true;
-    }
+function parseTask (step, statement) {
+    let [tasksDeclaration] = statement.declarations;
+    assert(tasksDeclaration.id.name === 'tasks');
+    TaskParserService.parse(step, tasksDeclaration.init);
+    return true;
+}
 
-    function parseExpectation (step, statement) {
-        var elements = _.first(statement.expression.callee.object.callee.object.arguments).elements;
-        _.each(elements, function (element) {
-            assert(!(element.name && element.name === 'tasks'));
-            var expectation = ExpectationParserService.parse(step, element);
-            assert(expectation);
-            step.expectations.push(expectation);
-        });
-        return true;
-    }
+function parseExpectation (step, statement) {
+    let [argument] = statement.expression.callee.object.callee.object.arguments
+    argument.elements.forEach(element => {
+        assert(!(element.name && element.name === 'tasks'));
+        let expectation = ExpectationParserService.parse(step, element);
+        assert(expectation);
+        step.expectations.push(expectation);
+    });
+    return true;
+}
 
-    function parsePending (step, statement) {
-        var callee = statement.expression.callee;
-        assert(callee.object.name === 'callback' || callee.object.name === 'done');
-        assert(callee.property.name === 'pending');
-        return true;
-    }
+function parsePending (step, statement) {
+    let callee = statement.expression.callee;
+    assert(callee.object.name === 'callback' || callee.object.name === 'done');
+    assert(callee.property.name === 'pending');
+    return true;
+}
 
-    function parseMockDone (step, statement) {
-        assert(statement.expression.callee.name === 'done');
-        return true;
-    }
+function parseMockDone (step, statement) {
+    assert(statement.expression.callee.name === 'done');
+    return true;
+}
 
-    function parseTaskDone (step, statement) {
-        assert(statement.expression.callee.object.arguments[0].name === 'done');
-        return true;
-    }
-};
+function parseTaskDone (step, statement) {
+    assert(statement.expression.callee.object.arguments[0].name === 'done');
+    return true;
+}
 
-StepDefinitionEditor.service('StepParserService', StepParserService);
+export default angular.module('stepParserService', [
+    ExpectationParserService.name,
+    MockParserService.name,
+    StepModel.name,
+    TaskParserService.name
+])
+.service('StepParserService', StepParserService);

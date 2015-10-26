@@ -1,64 +1,55 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
+// Constants:
+const TEN_SECONDS = 10000;
 
-// Module:
-var Core = require('../../Core');
+// Dependencies:
+import angular from 'angular';
+import NotificationTypes from './NotificationTypes';
 
-var NotifierService = function (
-    $interval
-) {
-    var NotificationTypes = {
-        SUCCESS: 'success',
-        INFO: 'info',
-        ERROR: 'error'
-    };
-
-    var notifications = [];
-
-    return {
-        success: success,
-        info: info,
-        error: error,
-        dismiss: dismiss,
-        notifications: notifications
-    };
-
-    function addNotification (notification) {
-        notifications.push(notification);
-        $interval(_.noop, 0, 1);
-        $interval(function () {
-            dismiss(notification);
-        }, 10000, 1);
+class NotifierService {
+    constructor (
+        $interval
+    ) {
+        this.$interval = $interval;
+        this.notifications = [];
     }
 
-    function success (message) {
-        addNotification({
-            message: message,
+    success (message) {
+        addNotification.call(this, {
+            message,
             type: NotificationTypes.SUCCESS
         });
     }
 
-    function info (message) {
-        addNotification({
-            message: message,
+    info (message) {
+        addNotification.call(this, {
+            message,
             type: NotificationTypes.INFO
         });
     }
 
-    function error (message) {
-        addNotification({
-            message: message,
+    error (message) {
+        addNotification.call(this, {
+            message,
             type: NotificationTypes.ERROR
         });
     }
 
-    function dismiss (toRemove) {
-        _.remove(notifications, function (notification) {
-            return notification === toRemove;
-        });
+    dismiss (toRemove) {
+        this.notifications.splice(this.notifications.indexOf(toRemove), 1);
     }
-};
+}
 
-Core.service('notifierService', NotifierService);
+function addNotification (notification) {
+    this.notifications.push(notification);
+    this.$interval(() => {}, 0, 1);
+    this.$interval(() => {
+        this.dismiss(notification);
+    }, TEN_SECONDS, 1);
+}
+
+export default angular.module('notifierService', [])
+.service('notifierService', (
+    $interval
+) => new NotifierService($interval));

@@ -2,7 +2,7 @@
 
 // Config:
 var src = './src/';
-var dest = './www/';
+var dest = './src/';
 
 module.exports = {
     src: src,

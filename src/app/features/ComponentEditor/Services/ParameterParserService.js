@@ -1,19 +1,22 @@
 'use strict';
 
-// Module:
-var ComponentEditor = require('../ComponentEditor');
-
 // Dependencies:
-require('../Models/ParameterModel');
+import angular from 'angular';
+import ParameterModel from '../Models/ParameterModel';
 
-var ParameterParserService = function ParameterParserService (ParameterModel) {
-    return {
-        parse: parse
-    };
-
-    function parse (action) {
-       return new ParameterModel(action);
+class ParameterParserService {
+    constructor (
+        ParameterModel
+    ) {
+        this.ParameterModel = ParameterModel
     }
-};
 
-ComponentEditor.service('ParameterParserService', ParameterParserService);
+    parse (action) {
+        return new ParameterModel(action);
+    }
+}
+
+export default angular.module('parameterParserService', [
+    ParameterModel.name
+])
+.service('parameterParserService', ParameterParserService);

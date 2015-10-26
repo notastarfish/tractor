@@ -1,38 +1,35 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var assert = require('assert');
-
-// Module:
-var StepDefinitionEditor = require('../StepDefinitionEditor');
+import assert from 'assert';
 
 // Dependencies:
-require('../Models/MockModel');
+import angular from 'angular';
+import MockModel from '../Models/MockModel';
 
-var MockParserService = function MockParserService (
-    MockModel
-) {
-    return {
-        parse: parse
-    };
+class MockParserService {
+    constructor (
+        MockModel
+    ) {
+        this.MockModel = MockModel;
+    }
 
-    function parse (step, ast) {
+    parse (step, ast) {
         try {
-            var mock = new MockModel(step);
+            let mock = new this.MockModel(step);
 
-            var mockCallExpression = ast.expression;
+            let mockCallExpression = ast.expression;
 
             mock.action = parseAction(mock, mockCallExpression);
             mock.url = parseUrl(mock, mockCallExpression);
 
             try {
                 return parseData(mock, mockCallExpression);
-            } catch (e) { }
+            } catch (e) {}
 
             try {
                 return parsePassThrough(mock, mockCallExpression);
-            } catch (e) { }
+            } catch (e) {}
 
             throw new Error();
         } catch (e) {
@@ -40,34 +37,39 @@ var MockParserService = function MockParserService (
             return null;
         }
     }
+}
 
-    function parseAction (mock, mockCallExpression) {
-        var action = mockCallExpression.callee.object.callee.property.name.replace(/^when/, '');
-        assert(action);
-        assert(_.contains(mock.actions, action));
-        return action;
-    }
+function parseAction (mock, mockCallExpression) {
+    let action = mockCallExpression.callee.object.callee.property.name.replace(/^when/, '');
+    assert(action);
+    assert(mock.actions.includes(action));
+    return action;
+}
 
-    function parseUrl (mock, mockCallExpression) {
-        var url = _.last(mockCallExpression.callee.object.arguments).raw;
-        var urlRegex = new RegExp(url.replace(/^\//, '').replace(/\/$/, ''));
-        assert(urlRegex);
-        return urlRegex.source;
-    }
+function parseUrl (mock, mockCallExpression) {
+    let [argument] = mockCallExpression.callee.object.arguments.reverse();
+    let url = argument.raw;
+    let urlRegex = new RegExp(url.replace(/^\//, '').replace(/\/$/, ''));
+    assert(urlRegex);
+    return urlRegex.source;
+}
 
-    function parseData (mock, mockCallExpression) {
-        var instanceName = _.first(mockCallExpression.arguments).name;
-        mock.data = _.find(mock.step.stepDefinition.mockDataInstances, function (mockDataInstance) {
-            return mockDataInstance.variableName === instanceName;
-        });
-        return mock;
-    }
+function parseData (mock, mockCallExpression) {
+    let [argument] = mockCallExpression.arguments;
+    let instanceName = argument.name;
+    mock.data = mock.step.stepDefinition.mockDataInstances.find(mockDataInstance => {
+        return mockDataInstance.variableName === instanceName;
+    });
+    return mock;
+}
 
-    function parsePassThrough (mock, mockCallExpression) {
-        assert(mockCallExpression.callee.property.name === 'passThrough');
-        mock.passThrough = true;
-        return mock;
-    }
-};
+function parsePassThrough (mock, mockCallExpression) {
+    assert(mockCallExpression.callee.property.name === 'passThrough');
+    mock.passThrough = true;
+    return mock;
+}
 
-StepDefinitionEditor.service('MockParserService', MockParserService);
+export default angular.module('mockParserService', [
+    MockModel.name
+])
+.service('MockParserService', MockParserService);

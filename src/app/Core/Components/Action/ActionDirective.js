@@ -1,44 +1,39 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var fs = require('fs');
+import changecase from 'change-case';
+import isUndefined from 'lodash.isundefined';
 
 // Dependencies:
-var camelcase = require('change-case').camel;
+import angular from 'angular';
+import template from './Action.html';
 
-// Module:
-var Core = require('../../Core');
+class ActionDirective {
+    constructor () {
+        this.restrict = 'E';
 
-var ActionDirective = function () {
-    return {
-        restrict: 'E',
-
-        scope: {
+        this.scope = {
             model: '=',
             action: '@',
             argument: '=',
             icon: '@'
-        },
+        };
 
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/Action.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        this.template = template;
+    }
 
-        link: link
-    };
-
-    function link ($scope) {
-        if (_.isUndefined($scope.model)) {
+    link ($scope) {
+        if (isUndefined($scope.model)) {
             throw new Error('The "tractor-action" directive requires a "model" attribute.');
         }
 
-        if (_.isUndefined($scope.action)) {
+        if (isUndefined($scope.action)) {
             throw new Error('The "tractor-action" directive requires an "action" attribute.');
         }
 
-        $scope.method = camelcase($scope.action);
+        $scope.method = changecase.camel($scope.action);
     }
-};
+}
 
-Core.directive('tractorAction', ActionDirective);
+export default angular.module('tractorAction', [])
+.directive('tractorAction', ActionDirective);

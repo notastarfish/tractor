@@ -90,7 +90,7 @@ describe('server/api: save-file:', () => {
             },
             params: { type }
         };
-        let response = { };
+        let response = {};
 
         sinon.stub(fileStructure, 'saveFile').returns(Promise.reject(error));
         sinon.stub(errorHandler, 'handler');
@@ -117,7 +117,7 @@ describe('server/api: save-file:', () => {
             },
             params: { type }
         };
-        let response = { };
+        let response = {};
 
         sinon.stub(fileStructure, 'saveFile').returns(Promise.reject(error));
         sinon.stub(errorHandler, 'handler');

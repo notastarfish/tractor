@@ -1,59 +1,50 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
-
 // Dependencies:
-require('./ArgumentModel');
+import angular from 'angular';
+import ArgumentModel from './ArgumentModel';
 
-var createMethodModelConstructor = function (
+function createMethodModelConstructor (
     ArgumentModel
 ) {
-    var MethodModel = function MethodModel (interaction, method) {
-        this.arguments = getArguments.call(this, method);
+    const interaction = Symbol();
+    const method = Symbol();
 
-        Object.defineProperties(this, {
-            interaction: {
-                get: function () {
-                    return interaction;
-                }
-            },
-            name: {
-                get: function () {
-                    return method.name;
-                }
-            },
-            description: {
-                get: function () {
-                    return method.description;
-                }
-            },
-            returns: {
-                get: function () {
-                    return method.returns;
-                }
+    return class MethodModel {
+        constructor (_interaction, _method) {
+            this[interaction] = _interaction;
+            this[method] = _method;
+
+            this.arguments = getArguments.call(this, method);
+
+            if (this.returns) {
+                this[this.returns] = this[method][this.returns];
             }
-        });
-
-        if (this.returns) {
-            this[this.returns] = method[this.returns];
         }
-    };
 
-    return MethodModel;
+        get interaction () {
+            return this[interaction];
+        }
+
+        get name () {
+            return this[method].name;
+        }
+
+        get description () {
+            return this[method].description;
+        }
+
+        get returns () {
+            return this[method].returns;
+        }
+    }
 
     function getArguments (method) {
-        return _.map(method.arguments, function (argument) {
-            return new ArgumentModel(this, argument);
-        }, this);
+        return method.arguments.map(argument => new ArgumentModel(this, argument));
     }
-};
+}
 
-ComponentEditor.factory('MethodModel', function (
-    ArgumentModel
-) {
-    return createMethodModelConstructor(ArgumentModel);
-});
+export default angular.module('methodModel', [
+    ArgumentModel.name
+])
+.factory('MethodModel', createMethodModelConstructor);

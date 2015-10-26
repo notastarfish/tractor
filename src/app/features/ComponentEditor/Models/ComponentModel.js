@@ -1,167 +1,145 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
+import changecase from 'change-case';
+import dedent from 'dedent';
 
 // Dependencies:
-var pascalcase = require('change-case').pascal;
-require('../../../Core/Services/ASTCreatorService');
-require('./BrowserModel');
-require('./ElementModel');
-require('./ActionModel');
+import angular from 'angular';
+import ActionModel from './ActionModel';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
+import BrowserModel from './BrowserModel';
+import ElementModel from './ElementModel';
 
-var createComponentModelConstructor = function (
+function createComponentModelConstructor (
     astCreatorService,
     BrowserModel,
     ElementModel,
     ActionModel
 ) {
-    var ComponentModel = function ComponentModel (options) {
-        var browser = new BrowserModel();
-        var elements = [browser];
-        var domElements = [];
-        var actions = [];
+    const actions = Symbol();
+    const browser = Symbol();
+    const domElements = Symbol();
+    const elements = Symbol();
+    const options = Symbol();
 
-        Object.defineProperties(this, {
-            isSaved: {
-                get: function () {
-                    return !!(options && options.isSaved);
-                }
-            },
-            path: {
-                get: function () {
-                    return options && options.path;
-                }
-            },
-            browser: {
-                get: function () {
-                    return browser;
-                }
-            },
-            domElements: {
-                get: function () {
-                    return domElements;
-                }
-            },
-            actions: {
-                get: function () {
-                    return actions;
-                }
-            },
-            elements: {
-                get: function () {
-                    return elements;
-                }
-            },
-            variableName: {
-                get: function () {
-                    return pascalcase(this.name);
-                }
-            },
-            meta: {
-                get: function () {
-                    return JSON.stringify({
-                        name: this.name,
-                        elements: this.domElements.map(function (element) {
-                            return element.meta;
-                        }),
-                        actions: this.actions.map(function (action) {
-                            return action.meta;
-                        })
-                    });
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            },
-            data: {
-                get: function () {
-                    return this.ast;
-                }
-            }
-        });
+    return class ComponentModel {
+        constructor (_options = {}) {
+            this[actions] = [];
+            this[browser] = new BrowserModel();
+            this[domElements] = [];
+            this[elements] = [browser];
+            this[options] = _options;
 
-        this.name = '';
-    };
+            this.name = '';
+        }
 
-    ComponentModel.prototype.addElement = function () {
-        var element = new ElementModel(this);
-        element.addFilter();
-        this.elements.push(element);
-        this.domElements.push(element);
-    };
+        get isSaved () {
+            return !!this[options].isSaved;
+        }
 
-    ComponentModel.prototype.removeElement = function (toRemove) {
-        _.remove(this.elements, function (element) {
-            return element === toRemove;
-        });
-        _.remove(this.domElements, function (domElement) {
-            return domElement === toRemove;
-        });
-    };
+        get path () {
+            return options.path;
+        }
 
-    ComponentModel.prototype.addAction = function () {
-        var action = new ActionModel(this);
-        this.actions.push(action);
-        action.addInteraction();
-    };
+        get actions () {
+            return this[actions];
+        }
 
-    ComponentModel.prototype.removeAction = function (toRemove) {
-        _.remove(this.actions, function (action) {
-            return action === toRemove;
-        });
-    };
+        get browser () {
+            return this[browser];
+        }
 
-    ComponentModel.prototype.getAllVariableNames = function (currentObject) {
-        currentObject = currentObject || this;
-        var objects = [this, this.elements, this.actions];
-        return _.chain(objects).flatten().compact().reject(function (object) {
-            return object === currentObject;
-        }).map(function (object) {
-            return object.name;
-        }).compact().value();
-    };
+        get domElements () {
+            return this[domElements];
+        }
 
-    return ComponentModel;
+        get elements () {
+            return this[elements];
+        }
+
+        get variableName () {
+            return changecase.pascal(this.name);
+        }
+
+        get meta () {
+            return JSON.stringify({
+                name: this.name,
+                elements: this.domElements.map(element => element.meta),
+                actions: this.actions.map(action => action.meta)
+            });
+        }
+
+        get ast () {
+            return toAST.call(this);
+        }
+
+        get data () {
+            return this.ast;
+        }
+
+        addElement () {
+            let element = new ElementModel(this);
+            element.addFilter();
+            this.elements.push(element);
+            this.domElements.push(element);
+        }
+
+        removeElement (toRemove) {
+            this.elements.splice(this.elements.findIndex(element => {
+                return element === toRemove;
+            }), 1);
+            this.domElements.splice(this.domElements.findIndex(domElement => {
+                return domElement === toRemove;
+            }), 1);
+        }
+
+        addAction () {
+            let action = new ActionModel(this);
+            this.actions.push(action);
+            action.addInteraction();
+        }
+
+        removeAction (toRemove) {
+            this.actions.splice(this.actions.findIndex(action => {
+                return action === toRemove;
+            }), 1);
+        }
+
+        getAllVariableNames (currentObject = this) {
+            let objects = [this].concat(this.elements).concat(this.actions);
+            return objects.filter(object => object !== currentObject)
+            .map(object => object.name);
+        }
+    }
 
     function toAST () {
-        var ast = astCreatorService;
+        let component = astCreatorService.identifier(this.variableName);
+        let elements = this.domElements.map(element => astCreatorService.expressionStatement(element.ast));
+        let actions = this.actions.map(action => astCreatorService.expressionStatement(action.ast));
 
-        var component = ast.identifier(this.variableName);
-        var elements = _.map(this.domElements, function (element) {
-            return ast.expressionStatement(element.ast);
-        });
-        var actions = _.map(this.actions, function (action) {
-            return ast.expressionStatement(action.ast);
-        });
+        let template = dedent(`
+            module.exports = (function () {
+                var <%= component %> = function <%= component %> () {
+                    %= elements %;
+                };
+                %= actions %;
+                return <%= component %>
+            })();
+        `);
 
-        var template = '';
-        template += 'module.exports = (function () {';
-        template += '    var <%= component %> = function <%= component %> () {';
-        template += '        %= elements %;';
-        template += '    };';
-        template += '    %= actions %;';
-        template += '    return <%= component %>';
-        template += '})();'
-
-        return ast.file(ast.expression(template, {
-            component: component,
-            elements: elements,
-            actions: actions
+        return astCreatorService.file(astCreatorService.expression(template, {
+            component,
+            elements,
+            actions
         }), this.meta);
     }
-};
+}
 
-ComponentEditor.factory('ComponentModel', function (
-    astCreatorService,
-    BrowserModel,
-    ElementModel,
-    ActionModel
-) {
-    return createComponentModelConstructor(astCreatorService, BrowserModel, ElementModel, ActionModel);
-});
+export default angular.module('componentModel', [
+    ActionModel.name,
+    ASTCreatorService.name,
+    BrowserModel.name,
+    ElementModel.name
+])
+.factory('ComponentModel', createComponentModelConstructor);

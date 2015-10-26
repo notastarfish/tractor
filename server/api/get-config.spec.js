@@ -19,7 +19,7 @@ import getConfig from './get-config';
 
 describe('server/api: get-config', () => {
     it('should respond with the current config:', () => {
-        let request = { };
+        let request = {};
         let response = {
             send: _.noop
         };

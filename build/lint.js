@@ -18,7 +18,11 @@ function server () {
 }
 
 function client () {
-    return gulp.src(['src/**/*.js'])
+    return gulp.src([
+        'src/app/**/*.js',
+        '!src/app/**/*spec.js',
+        '!src/app/**/*mock.js'
+    ])
     .pipe(eslint())
     .pipe(eslint.format());
 }

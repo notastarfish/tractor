@@ -1,78 +1,70 @@
 'use strict';
 
 // Utilities:
-var path = require('path');
+import changecase from 'change-case';
+import path from 'path';
 
-// Module:
-var StepDefinitionEditor = require('../StepDefinitionEditor');
+// Dependencies:
+import angular from 'angular';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
 
-// Depenedencies:
-var camel = require('change-case').camel;
-require('../../../Core/Services/ASTCreatorService');
-
-var createComponentInstanceModelConstructor = function (
+function createComponentInstanceModelConstructor (
     astCreatorService
 ) {
-    var ComponentInstanceModel = function ComponentInstanceModel (component, stepDefinition) {
-        Object.defineProperties(this, {
-            stepDefinition: {
-                get: function () {
-                    return stepDefinition;
-                }
-            },
-            component: {
-                get: function () {
-                    return component;
-                }
-            },
-            name: {
-                get: function () {
-                    return this.component.name;
-                }
-            },
-            variableName: {
-                get: function () {
-                    return camel(this.component.name);
-                }
-            },
-            meta: {
-                get: function () {
-                    return {
-                        name: this.name
-                    };
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            }
-        });
-    };
+    const component = Symbol();
+    const stepDefinition = Symbol();
 
-    return ComponentInstanceModel;
+    return class ComponentInstanceModel {
+        constructor (_component, _stepDefinition) {
+            this[component] = _component;
+            this[stepDefinition] = _stepDefinition;
+        }
+
+        get stepDefinition () {
+            return this[stepDefinition];
+        }
+
+        get component () {
+            return this[component];
+        }
+
+        get name () {
+            return this.component.name;
+        }
+
+        get variableName () {
+            return changecase.camel(this.component.name);
+        }
+
+        get meta () {
+            return {
+                name: this.name
+            };
+        }
+
+        get ast () {
+            return toAST.call(this);
+        }
+    }
 
     function toAST () {
-        var ast = astCreatorService;
-
-        var template = 'var <%= constructor %> = require(<%= path %>), ';
+        let template = 'var <%= constructor %> = require(<%= relativePath %>), ';
         template += '<%= name %> = new <%= constructor %>(); ';
 
         // Sw33t hax()rz to get around the browserify "path" shim not working on Windows.
-        var stepDefinitionPath = this.stepDefinition.path.replace(/^[A-Z]:\\/, '').replace(/\\/g, '/');
-        var componentPath = this.component.path.replace(/^[A-Z]:\\/, '').replace(/\\/g, '/');
-        var relativePath = path.relative(path.dirname(stepDefinitionPath), componentPath);
+        let stepDefinitionPath = this.stepDefinition.path.replace(/^[A-Z]:\\/, '').replace(/\\/g, '/');
+        let componentPath = this.component.path.replace(/^[A-Z]:\\/, '').replace(/\\/g, '/');
+        let relativePath = path.relative(path.dirname(stepDefinitionPath), componentPath);
+        relativePath = astCreatorService.literal(relativePath);
 
-        return ast.template(template, {
-            constructor: ast.identifier(this.component.variableName),
-            path: ast.literal(relativePath),
-            name: ast.identifier(this.variableName)
-        });
+        let constructor = astCreatorService.identifier(this.component.variableName);
+        let name = astCreatorService.identifier(this.variableName);
+
+        return astCreatorService.template(template, { constructor, relativePath, name });
     }
-};
+}
 
-StepDefinitionEditor.factory('ComponentInstanceModel', function (
-    astCreatorService
-) {
-    return createComponentInstanceModelConstructor(astCreatorService);
-});
+export default angular.module('componentInstanceModel', [
+    ASTCreatorService.name
+])
+.factory('ComponentInstanceModel', createComponentInstanceModelConstructor);

@@ -1,7 +1,7 @@
 'use strict';
 
 // Config:
-var config       = require('./config.js');
+var config = require('./config.js');
 
 // Utilities:
 var gulp = require('gulp');
@@ -20,7 +20,7 @@ var errorHandler = require('./utilities/error-handler');
 module.exports = styles;
 
 function styles () {
-    var cssFilter = filter('*.css');
+    var cssFilter = filter('*.css', { restore: true });
 
     return sass(config.stylesDir, {
         sourcemap: true
@@ -33,7 +33,7 @@ function styles () {
     .pipe(autoprefixer({
         browsers: ['last 2 version']
     }))
-    .pipe(cssFilter.restore())
+    .pipe(cssFilter.restore)
     .pipe(cssimport())
     .pipe(gulp.dest(config.dest))
     .pipe(browserSync.reload({

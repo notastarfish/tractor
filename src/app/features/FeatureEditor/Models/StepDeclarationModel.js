@@ -1,41 +1,33 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
+// Dependencies:
+import angular from 'angular';
 
-// Module:
-var FeatureEditor = require('../FeatureEditor');
+function createStepDeclarationModelConstructor () {
+    class StepDeclarationModel {
+        constructor () {
+            this.types = ['Given', 'When', 'Then', 'And', 'But'];
+            let [type] = this.types;
+            this.type = type;
+            this.step = '';
+        }
 
-var createStepDeclarationModelConstructor = function () {
-    var StepDeclarationModel = function StepDeclarationModel () {
-        Object.defineProperties(this, {
-            feature: {
-                get: function () {
-                    return toFeature.call(this);
-                }
-            }
-        });
+        get feature () {
+            return toFeature.call(this);
+        }
+    }
 
-        this.type = _.first(this.types);
-        this.step = '';
-    };
-
-    StepDeclarationModel.prototype.types = ['Given', 'When', 'Then', 'And', 'But'];
-
-    StepDeclarationModel.getExampleVariableNames = _.memoize(function (step) {
-        return _.chain(step.match(new RegExp('<.+?>', 'g')))
-        .map(function (result) {
-            return result.replace(/^</, '').replace(/>$/, '');
-        }).value();
-    });
+    StepDeclarationModel.getExampleVariableNames = step => {
+        return step.match(new RegExp('<.+?>', 'g'))
+        .map(result => result.replace(/^</, '').replace(/>$/, ''));
+    }
 
     return StepDeclarationModel;
 
     function toFeature () {
-        return this.type + ' ' + this.step;
+        return `${this.type} ${this.step}`;
     }
-};
+}
 
-FeatureEditor.factory('StepDeclarationModel', function () {
-    return createStepDeclarationModelConstructor();
-});
+export default angular.module('stepDeclarationModel', [])
+.factory('StepDeclarationModel', createStepDeclarationModelConstructor);

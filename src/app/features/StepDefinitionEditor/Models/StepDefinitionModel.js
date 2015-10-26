@@ -1,122 +1,91 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-
-// Module:
-var StepDefinitionEditor = require('../StepDefinitionEditor');
-
 // Dependencies:
-require('../../../Core/Services/ASTCreatorService');
-require('./ComponentInstanceModel');
-require('./MockDataInstanceModel');
+import angular from 'angular';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
+import ComponentInstanceModel from './ComponentInstanceModel';
+import MockDataInstanceModel from './MockDataInstanceModel';
 
-var createStepDefinitionModelConstructor = function (
+function createStepDefinitionModelConstructor (
     astCreatorService,
-    ComponentFileService,
-    MockDataFileService,
+    componentFileService,
     ComponentInstanceModel,
+    mockDataFileService,
     MockDataInstanceModel
 ) {
-    var StepDefinitionModel = function StepDefinitionModel (options) {
-        this.components = [];
-        this.componentInstances = [];
+    return class StepDefinitionModel {
+        constructor (options = {}) {
+            this.options = options;
 
-        this.mockData = [];
-        this.mockDataInstances = [];
+            this.components = [];
+            this.componentInstances = [];
 
-        Object.defineProperties(this, {
-            availableComponents: {
-                get: function () {
-                    return options.availableComponents;
-                }
-            },
-            availableMockData: {
-                get: function () {
-                    return options.availableMockData;
-                }
-            },
-            path: {
-                get: function () {
-                    return options.path;
-                }
-            },
-            meta: {
-                get: function () {
-                    return JSON.stringify({
-                        name: this.name,
-                        components: this.componentInstances.map(function (component) {
-                            return component.meta;
-                        }),
-                        mockData: this.mockDataInstances.map(function (mockData) {
-                            return mockData.meta;
-                        })
-                    });
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            },
-            data: {
-                get: function () {
-                    return this.ast;
-                }
+            this.mockData = [];
+            this.mockDataInstances = [];
+        }
+
+        get availableComponents () {
+            return this.options.availableComponents;
+        }
+
+        get availableMockData () {
+            return this.options.availableMockData;
+        }
+
+        get path () {
+            return this.options.path;
+        }
+
+        get meta () {
+            return JSON.stringify({
+                name: this.name,
+                components: this.componentInstances.map(component => component.meta),
+                mockData: this.mockDataInstances.map(mockData => mockData.meta)
+            });
+        }
+
+        get ast () {
+            return toAST.call(this);
+        }
+
+        get data () {
+            return this.ast;
+        }
+
+        addComponent (name) {
+            let component = this.availableComponents.find(component => component.name === name);
+            if (component && !this.components.includes(component)) {
+                this.components.push(component);
+                this.componentInstances.push(new ComponentInstanceModel(component, this));
             }
-        });
-    };
-
-    StepDefinitionModel.prototype.addComponent = function (name) {
-        var component = _.find(this.availableComponents, function (component) {
-            return component.name === name;
-        });
-        if (component && !_.contains(this.components, component)) {
-            this.components.push(component);
-            this.componentInstances.push(new ComponentInstanceModel(component, this));
         }
-    };
 
-    StepDefinitionModel.prototype.removeComponent = function (toRemove) {
-        var index = _.indexOf(this.componentInstances, toRemove);
-        _.remove(this.componentInstances, function (component) {
-            return component === toRemove;
-        });
-        this.components.splice(index, 1);
-    };
-
-    StepDefinitionModel.prototype.addMock = function (name) {
-        var mockData = _.find(this.availableMockData, function (mockData) {
-            return mockData.name === name;
-        });
-        if (mockData && !_.contains(this.mockData, mockData)) {
-            this.mockData.push(mockData);
-            this.mockDataInstances.push(new MockDataInstanceModel(mockData, this));
+        removeComponent (toRemove) {
+            let index = this.componentInstances.indexOf(toRemove);
+            this.componentInstances.splice(index, 1);
+            this.components.splice(index, 1);
         }
-    };
 
-    StepDefinitionModel.prototype.removeMock = function (toRemove) {
-        var index = _.indexOf(this.mockDataInstances, toRemove);
-        _.remove(this.mockDataInstances, function (mockDataInstance) {
-            return mockDataInstance === toRemove;
-        });
-        this.mockData.splice(index, 1);
-    };
+        addMock (name) {
+            let mockData = this.availableMockData.find(mockData => mockData.name === name);
+            if (mockData && !this.mockData.includes(mockData)) {
+                this.mockData.push(mockData);
+                this.mockDataInstances.push(new MockDataInstanceModel(mockData, this));
+            }
+        }
 
-    return StepDefinitionModel;
+        removeMock (toRemove) {
+            let index = this.mockDataInstances.indexOf(toRemove);
+            this.mockDataInstances.splice(index, 1);
+            this.mockData.splice(index, 1);
+        }
+    }
 
     function toAST () {
-        var ast = astCreatorService;
+        let components = this.componentInstances.map(component => component.ast);
+        let mockData = this.mockDataInstances.map(mockData => mockData.ast);
 
-        var components = this.componentInstances.map(function (component) {
-            return component.ast;
-        });
-
-        var mockData = this.mockDataInstances.map(function (mockData) {
-            return mockData.ast;
-        });
-
-        var template = 'module.exports = function () { ';
+        let template = 'module.exports = function () { ';
         if (components.length) {
             template += '%= components %; ';
         }
@@ -126,20 +95,14 @@ var createStepDefinitionModelConstructor = function (
         template += '%= step %; ';
         template += '};';
 
-        return ast.file(ast.expression(template, {
-            components: components,
-            mockData: mockData,
-            step: this.step.ast
-        }), this.meta);
-    };
-};
+        let step = this.step.ast;
+        return astCreatorService.file(astCreatorService.expression(template, { components, mockData, step }), this.meta);
+    }
+}
 
-StepDefinitionEditor.factory('StepDefinitionModel', function (
-    astCreatorService,
-    ComponentFileService,
-    MockDataFileService,
-    ComponentInstanceModel,
-    MockDataInstanceModel
-) {
-    return createStepDefinitionModelConstructor(astCreatorService, ComponentFileService, MockDataFileService, ComponentInstanceModel, MockDataInstanceModel);
-});
+export default angular.module('stepDefinitionModel', [
+    ASTCreatorService.name,
+    ComponentInstanceModel.name,
+    MockDataInstanceModel.name
+])
+.factory('StepDefinitionModel', createStepDefinitionModelConstructor);

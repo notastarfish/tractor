@@ -82,7 +82,7 @@ describe('server/files: FeatureFile:', () => {
 
         it('should lex the contents', () => {
             let features = ['feature1', 'feature2'];
-            let lexer = function Lexer () { };
+            let lexer = function Lexer () {};
             lexer.prototype.scan = _.noop;
             let directory = {
                 addFile: _.noop

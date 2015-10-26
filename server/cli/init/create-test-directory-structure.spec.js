@@ -64,7 +64,7 @@ describe('server/cli/init: create-test-directory-structure:', () => {
         sinon.stub(log, 'warn');
 
         return createTestDirectoryStructure.run('directory')
-        .catch(() => { })
+        .catch(() => {})
         .then(() => {
             expect(log.warn).to.not.have.been.called();
         })

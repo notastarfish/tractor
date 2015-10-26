@@ -1,13 +1,10 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var Promise = require('bluebird');
+import Promise from 'bluebird';
 
-var FileEditorController = (function () {
-    var FileEditorController = function FileEditorController (
-        $scope,
-        $window,
+export default class FileEditorController {
+    constructor (
         $state,
         confirmDialogService,
         persistentStateService,
@@ -17,8 +14,6 @@ var FileEditorController = (function () {
         fileStructure,
         filePath
     ) {
-        this.$scope = $scope;
-        this.$window = $window;
         this.$state = $state;
         this.confirmDialogService = confirmDialogService;
         this.persistentStateService = persistentStateService;
@@ -31,86 +26,70 @@ var FileEditorController = (function () {
         this.availableMockData = fileStructure.availableMockData;
 
         if (filePath) {
-            this.fileService.openFile({ path: filePath.path }, this.availableComponents, this.availableMockData)
-            .then(function (file) {
-                this.fileModel = file;
-            }.bind(this));
+            let { path } = filePath;
+            this.fileService.openFile({ path }, this.availableComponents, this.availableMockData)
+            .then(file => this.fileModel = file);
         } else if (FileModel && !this.fileModel) {
             this.newFile();
         }
-    };
+    }
 
-    FileEditorController.prototype.newFile = function () {
+    newFile () {
         if (this.fileModel) {
             this.$state.go('.', { file: null });
         }
         this.fileModel = new this.FileModel();
-    };
+    }
 
-    FileEditorController.prototype.saveFile = function () {
-        var path = null;
+    saveFile () {
+        let path = null;
+        let { data, name } = this.fileModel;
 
-        this.fileService.getPath({
-            path: this.fileModel.path,
-            name: this.fileModel.name
-        })
-        .then(function (filePath) {
+        this.fileService.getPath({ path: this.fileModel.path, name })
+        .then((filePath) => {
             path = filePath.path;
-            var exists = this.fileService.checkFileExists(this.fileStructure, path);
+            let exists = this.fileService.checkFileExists(this.fileStructure, path);
 
             if (exists) {
                 this.confirmOverWrite = this.confirmDialogService.show();
                 return this.confirmOverWrite.promise
-                .finally(function () {
+                .finally(() => {
                     this.confirmOverWrite = null;
-                }.bind(this));
+                });
             } else {
                 return Promise.resolve();
             }
-        }.bind(this))
-        .then(function () {
-            return this.fileService.saveFile({
-                data: this.fileModel.data,
-                path: path
-            });
-        }.bind(this))
-        .then(function () {
-            return this.fileService.getFileStructure();
-        }.bind(this))
-        .then(function (fileStructure) {
+        })
+        .then(() => this.fileService.saveFile({ data, path }))
+        .then(() => this.fileService.getFileStructure())
+        .then(fileStructure => {
             this.fileStructure = fileStructure;
-            this.fileService.openFile({ path }, this.availableComponents, this.availableMockData)
-            .then(function (file) {
-                this.fileModel = file;
-            }.bind(this));
-        }.bind(this))
-        .catch(function () {
+            return this.fileService.openFile({ path }, this.availableComponents, this.availableMockData)
+        })
+        .then(file => this.fileModel = file)
+        .catch(() => {
             this.notifierService.error('File was not saved.');
-        }.bind(this));
-    };
+        });
+    }
 
-    FileEditorController.prototype.showErrors = function () {
-        var fileEditor = this.fileEditor;
+    showErrors () {
+        let fileEditor = this.fileEditor;
         if (fileEditor.$invalid) {
-            _.each(Object.keys(fileEditor.$error), function (invalidType) {
-                _.each(fileEditor.$error[invalidType], function (element) {
+            Object.keys(fileEditor.$error).forEach((invalidType) => {
+                fileEditor.$error[invalidType].forEach((element) => {
                     element.$setTouched();
                 });
             });
-            this.notifierService.error('Can\'t save file, something is invalid.');
+            this.notifierService.error(`Can't save file, something is invalid.`);
         }
         return !fileEditor.$invalid;
-    };
+    }
 
-    FileEditorController.prototype.minimise = function (item) {
+    minimise (item) {
         item.minimised = !item.minimised;
 
-        var displayState = this.persistentStateService.get(this.fileModel.name);
+        let displayState = this.persistentStateService.get(this.fileModel.name);
         displayState[item.name] = item.minimised;
         this.persistentStateService.set(this.fileModel.name, displayState);
-    };
-
-    return FileEditorController;
-})();
-
-module.exports = FileEditorController;
+    }
+}

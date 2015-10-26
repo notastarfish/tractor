@@ -1,114 +1,97 @@
 'use strict';
 
-// Utilities;
-var _ = require('lodash');
-
-// Module:
-var StepDefinitionEditor = require('../StepDefinitionEditor');
-
 // Dependencies:
-require('../../../Core/Services/ASTCreatorService');
-require('./ExpectationModel');
-require('./TaskModel');
-require('./MockModel');
+import angular from 'angular';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
+import ExpectationModel from './ExpectationModel';
+import MockModel from './MockModel';
+import TaskModel from './TaskModel';
 
-var createStepModelConstructor = function (
+function createStepModelConstructor (
     astCreatorService,
     ExpectationModel,
     TaskModel,
     MockModel
 ) {
-    var StepModel = function StepModel (stepDefinition) {
-        var expectations = [];
-        var tasks = [];
-        var mocks = [];
+    const expectations = Symbol();
+    const mocks = Symbol();
+    const stepDefinition = Symbol();
+    const tasks = Symbol();
 
-        Object.defineProperties(this, {
-            stepDefinition: {
-                get: function () {
-                    return stepDefinition;
-                }
-            },
-            expectations: {
-                get: function () {
-                    return expectations;
-                }
-            },
-            tasks: {
-                get: function () {
-                    return tasks;
-                }
-            },
-            mocks: {
-                get: function () {
-                    return mocks;
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            }
-        });
-    };
+    return class StepModel {
+        constructor (_stepDefinition) {
+            this[expectations] = [];
+            this[mocks] = [];
+            this[stepDefinition] = _stepDefinition;
+            this[tasks] = [];
 
-    StepModel.prototype.stepTypes = ['Given', 'When', 'Then', 'And', 'But'];
+            this.stepTypes = ['Given', 'When', 'Then', 'And', 'But'];
+        }
 
-    StepModel.prototype.addExpectation = function () {
-        this.expectations.push(new ExpectationModel(this));
-    };
+        get expectations () {
+            return this[expectations];
+        }
 
-    StepModel.prototype.removeExpectation = function (toRemove) {
-        _.remove(this.expectations, function (expectation) {
-            return expectation === toRemove;
-        });
-    };
+        get mocks () {
+            return this[mocks];
+        }
 
-    StepModel.prototype.addTask = function () {
-        this.tasks.push(new TaskModel(this));
-    };
+        get stepDefinition () {
+            return this[stepDefinition];
+        }
 
-    StepModel.prototype.removeTask = function (toRemove) {
-        _.remove(this.tasks, function (task) {
-            return task === toRemove;
-        });
-    };
+        get tasks () {
+            return this[tasks];
+        }
 
-    StepModel.prototype.addMock = function () {
-        this.mocks.push(new MockModel(this));
-    };
+        get ast () {
+            return toAST.call(this);
+        }
 
-    StepModel.prototype.removeMock = function (toRemove) {
-        _.remove(this.mocks, function (mock) {
-            return mock === toRemove;
-        });
-    };
+        addExpectation () {
+            this.expectations.push(new ExpectationModel(this));
+        }
 
-    return StepModel;
+        removeExpectation (toRemove) {
+            this.expectations.splice(this.expectations.findIndex(expectation => {
+                return expectation === toRemove;
+            }), 1);
+        }
+
+        addTask () {
+            this.tasks.push(new TaskModel(this));
+        }
+
+        removeTask (toRemove) {
+            this.tasks.splice(this.tasks.findIndex(task => {
+                return task === toRemove;
+            }), 1);
+        }
+
+        addMock () {
+            this.mocks.push(new MockModel(this));
+        }
+
+        removeMock (toRemove) {
+            this.mocks.splice(this.mocks(mock => {
+                return mock === toRemove;
+            }), 1);
+        }
+    }
 
     function toAST () {
-        var ast = astCreatorService;
+        let expectations = this.expectations.map(expectation => expectation.ast);
+        let mocks = this.mocks.map(mock => mock.ast);
+        let tasks = this.tasks.map(task => task.ast);
 
-        var expectations = this.expectations.map(function (expectation) {
-            return expectation.ast;
-        });
-
-        var mocks = this.mocks.map(function (mock) {
-            return mock.ast;
-        });
-
-        var tasks = this.tasks.map(function (task) {
-            return task.ast;
-        });
-
-        var template = 'this.<%= type %>(<%= regex %>, function (done) { ';
+        let template = 'this.<%= type %>(<%= regex %>, function (done) { ';
         if (mocks.length) {
             template += '%= mocks %; ';
             template += 'done();';
         } else if (tasks.length) {
             template += 'var tasks = <%= tasks[0] %>';
-            tasks.slice(1).forEach(function (taskAST, index) {
-                template += '.then(function () { return <%= tasks[' + (index + 1) + '] %>; })';
+            tasks.slice(1).forEach((taskAST, index) => {
+                template += `.then(function () { return <%= tasks[${index + 1}] %>; })`;
             });
             template += ';';
             template += 'Promise.resolve(tasks).then(done).catch(done.fail);';
@@ -119,21 +102,16 @@ var createStepModelConstructor = function (
         }
         template += '});';
 
-        return ast.template(template, {
-            type: ast.identifier(this.type),
-            regex: ast.literal(this.regex),
-            mocks: mocks,
-            tasks: tasks,
-            expectations: expectations
-        });
+        let type = astCreatorService.identifier(this.type);
+        let regex = astCreatorService.literal(this.regex);
+        return astCreatorService.template(template, { type, regex, mocks, tasks, expectations });
     }
-};
+}
 
-StepDefinitionEditor.factory('StepModel', function (
-    astCreatorService,
-    ExpectationModel,
-    TaskModel,
-    MockModel
-) {
-    return createStepModelConstructor(astCreatorService, ExpectationModel, TaskModel, MockModel);
-});
+export default angular.module('stepModel', [
+    ASTCreatorService.name,
+    ExpectationModel.name,
+    MockModel.name,
+    TaskModel.name
+])
+.factory('StepModel', createStepModelConstructor);

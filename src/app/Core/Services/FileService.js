@@ -1,63 +1,50 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
+export default class FileService {
+    constructor (
+        $http,
+        parserService,
+        fileStructureService,
+        type
+    ) {
+        this.$http = $http;
+        this.parserService = parserService;
+        this.fileStructureService = fileStructureService;
+        this.type = type;
+    }
 
-// Dependencies:
-require('./FileStructureService');
-
-var FileService = function FileService (
-    $http,
-    ParserService,
-    fileStructureService,
-    type
-) {
-    return {
-        checkFileExists: checkFileExists,
-        getFileStructure: getFileStructure,
-        getPath: getPath,
-        openFile: openFile,
-        saveFile: saveFile
-    };
-
-    function checkFileExists (fileStructure, filePath) {
+    checkFileExists (fileStructure, filePath) {
         return !!findFileByPath(fileStructure, filePath);
     }
 
-    function findFileByPath (fileStructure, filePath) {
-        return _.find(fileStructure.directory.allFiles, function (file) {
-            return file.path.includes(filePath) || file.path.includes(filePath.replace(/\//g, '\\'));
-        });
+    getFileStructure () {
+        return this.fileStructureService.getFileStructure(this.type);
     }
 
-    function getFileStructure () {
-        return fileStructureService.getFileStructure(type);
-    }
-
-    function getPath (options) {
-        if (options.name) {
-            options.name = decodeURIComponent(options.name);
+    getPath (params) {
+        if (params.name) {
+            params.name = decodeURIComponent(params.name);
         }
-        return $http.get('/' + type + '/file/path', {
-            params: options
-        });
+        return this.$http.get(`/${this.type}/file/path`, { params });
     }
 
-    function openFile (options, availableComponents, availableMockData) {
-        if (options.path) {
-            options.path = decodeURIComponent(options.path);
+    openFile (params, availableComponents, availableMockData) {
+        if (params.path) {
+            params.path = decodeURIComponent(params.path);
         }
-        return $http.get('/' + type + '/file', {
-            params: options
-        })
-        .then(function (file) {
-            return ParserService.parse(file, availableComponents, availableMockData);
+        return this.$http.get(`/${this.type}/file`, { params })
+        .then((file) => {
+            return this.parserService.parse(file, availableComponents, availableMockData);
         });
     }
 
-    function saveFile (options) {
-        return $http.put('/' + type + '/file', options);
+    saveFile (options) {
+        return this.$http.put(`/${this.type}/file`, options);
     }
-};
+}
 
-module.exports = FileService;
+function findFileByPath (fileStructure, filePath) {
+    return fileStructure.directory.allFiles.find((file) => {
+        return file.path.includes(filePath) || file.path.includes(filePath.replace(/\//g, '\\'));
+    });
+}

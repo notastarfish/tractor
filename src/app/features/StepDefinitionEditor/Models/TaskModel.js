@@ -1,95 +1,81 @@
 'use strict';
 
-// Utilities;
-var _ = require('lodash');
-
-// Module:
-var StepDefinitionEditor = require('../StepDefinitionEditor');
-
 // Dependencies:
-require('../../../Core/Services/ASTCreatorService');
-require('../../ComponentEditor/Models/ArgumentModel');
+import angular from 'angular';
+import ArgumentModel from '../../ComponentEditor/Models/ArgumentModel';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
 
-var createTaskModelConstructor = function (
+function createTaskModelConstructor (
     astCreatorService,
     ArgumentModel
 ) {
-    var TaskModel = function TaskModel (step) {
-        var component;
-        var action;
-        var args;
+    const action = Symbol();
+    const args = Symbol();
+    const component = Symbol();
+    const step = Symbol();
 
-        Object.defineProperties(this, {
-            step: {
-                get: function () {
-                    return step;
-                }
-            },
-            component: {
-                get: function () {
-                    return component;
-                },
-                set: function (newComponent) {
-                    component = newComponent;
-                    this.action = _.first(this.component.component.actions);
-                }
-            },
-            action: {
-                get: function () {
-                    return action;
-                },
-                set: function (newAction) {
-                    action = newAction;
-                    args = parseArguments.call(this);
-                }
-            },
-            arguments: {
-                get: function () {
-                    return args;
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            }
-        });
+    return class TaskModel {
+        constructor (_step) {
+            this[step] = _step;
 
-        this.component = _.first(this.step.stepDefinition.componentInstances);
-        this.action = _.first(this.component.component.actions);
-    };
+            let [firstComponent] = this.step.stepDefinition.componentInstances;
+            this[component] = firstComponent;
+            let [firstAction] = this.component.component.actions;
+            this[action] = firstAction;
+        }
 
-    return TaskModel;
+        get step () {
+            return this[step];
+        }
+
+        get component () {
+            return this[component];
+        }
+        set component (newComponent) {
+            this[component] = newComponent;
+            let [firstAction] = this.component.component.actions;
+            this[action] = firstAction;
+        }
+
+        get action () {
+            return this[action];
+        }
+        set action (newAction) {
+            this[action] = newAction;
+            this[args] = parseArguments.call(this);
+        }
+
+        get arguments () {
+            return this[args];
+        }
+
+        get ast () {
+            return toAST.call(this);
+        }
+    }
 
     function toAST () {
-        var ast = astCreatorService;
+        let template = '<%= component %>.<%= action %>(%= taskArguments %)';
 
-        var template = '<%= component %>.<%= action %>(%= taskArguments %)';
+        let action = astCreatorService.identifier(this.action.variableName);
+        let component = astCreatorService.identifier(this.component.variableName);
+        let taskArguments = this.arguments.map(argument => argument.ast);
 
-        var taskArguments = _.map(this.arguments, function (argument) {
-            return argument.ast;
-        });
-
-        return ast.template(template, {
-            component: ast.identifier(this.component.variableName),
-            action: ast.identifier(this.action.variableName),
-            taskArguments: taskArguments
-        }).expression;
+        return astCreatorService.template(template, { action, component, taskArguments }).expression;
     }
 
     function parseArguments () {
-        return _.map(this.action.parameters, function (parameter) {
-            var name = parameter.name;
+        return this.action.parameters.map(parameter => {
+            let name = parameter.name;
             name = name.replace(/([A-Z])/g, ' $1');
-            name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-            return new ArgumentModel(null, { name: name });
+            name = `${name.charAt(0).toUpperCase()}${name.slice(1).toLowerCase()}`;
+            return new ArgumentModel(null, { name });
         });
     }
-};
+}
 
-StepDefinitionEditor.factory('TaskModel', function (
-    astCreatorService,
-    ArgumentModel
-) {
-    return createTaskModelConstructor(astCreatorService, ArgumentModel);
-});
+export default angular.module('taskModel', [
+    ArgumentModel.name,
+    ASTCreatorService.name
+])
+.factory('TaskModel', createTaskModelConstructor);

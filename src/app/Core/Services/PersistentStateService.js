@@ -1,35 +1,35 @@
 'use strict';
 
-// Module:
-var Core = require('../Core');
+// Constants:
+const PERSISTENT_STATE_KEY = 'PERSISTENT_STATE';
 
-var PersistentStateService = function PersistentStateService (
-    localStorageService
-) {
-    var PERSISTENT_STATE_KEY = 'PERSISTENT_STATE';
+// Dependencies:
+import angular from 'angular';
 
-    return {
-        get: get,
-        set: set,
-        remove: remove
-    };
+class PersistentStateService {
+    constructor (
+        localStorageService
+    ) {
+        this.localStorageService = localStorageService;
+    }
 
-    function get (name) {
-        var state = localStorageService.get(PERSISTENT_STATE_KEY) || {};
+    get (name) {
+        let state = this.localStorageService.get(PERSISTENT_STATE_KEY) || {};
         return state[name] || {};
     }
 
-    function set (name, value) {
-        var state = localStorageService.get(PERSISTENT_STATE_KEY) || {};
+    set (name, value) {
+        let state = this.localStorageService.get(PERSISTENT_STATE_KEY) || {};
         state[name] = value;
-        localStorageService.set(PERSISTENT_STATE_KEY, state);
+        this.localStorageService.set(PERSISTENT_STATE_KEY, state);
     }
 
-    function remove (name) {
-        var state = localStorageService.get(PERSISTENT_STATE_KEY) || {};
+    remove (name) {
+        let state = this.localStorageService.get(PERSISTENT_STATE_KEY) || {};
         delete state[name];
-        localStorageService.set(PERSISTENT_STATE_KEY, state);
+        this.localStorageService.set(PERSISTENT_STATE_KEY, state);
     }
-};
+}
 
-Core.service('persistentStateService', PersistentStateService);
+export default angular.module('persistentStateService', [])
+.service('persistentStateService', PersistentStateService);

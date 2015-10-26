@@ -1,40 +1,43 @@
 'use strict';
 
-// Module:
-var MockDataEditor = require('./MockDataEditor');
-
 // Dependencies:
-var FileEditorController = require('../FileEditor/FileEditorController');
-require('../../Core/Services/ConfirmDialogService');
-require('../../Core/Services/PersistentStateService');
-require('../../Core/Components/Notifier/NotifierService');
-require('./Services/MockDataFileService');
-require('./Models/MockDataModel');
+import angular from 'angular';
+import ConfirmDialogService from '../../Core/Services/ConfirmDialogService';
+import FileEditorController from '../FileEditor/FileEditorController';
+import MockDataFileService from './Services/MockDataFileService';
+import MockDataModel from './Models/MockDataModel';
+import NotifierService from '../../Core/Components/Notifier/NotifierService';
+import PersistentStateService from '../../Core/Services/PersistentStateService';
 
-var MockDataEditorController = function MockDataEditorController (
-    $scope,
-    $window,
-    $state,
-    confirmDialogService,
-    persistentStateService,
-    notifierService,
-    MockDataFileService,
-    MockDataModel,
-    mockDataFileStructure,
-    mockDataPath
-) {
-    return new FileEditorController(
-        $scope,
-        $window,
+class MockDataEditorController extends FileEditorController {
+    constructor (
         $state,
         confirmDialogService,
         persistentStateService,
         notifierService,
-        MockDataFileService,
+        mockDataFileService,
         MockDataModel,
         mockDataFileStructure,
         mockDataPath
-    );
-};
+    ) {
+        super(
+            $state,
+            confirmDialogService,
+            persistentStateService,
+            notifierService,
+            MockDataFileService,
+            MockDataModel,
+            mockDataFileStructure,
+            mockDataPath
+        );
+    }
+}
 
-MockDataEditor.controller('MockDataEditorController', MockDataEditorController);
+export default angular.module('mockDataEditorController', [
+    ConfirmDialogService.name,
+    MockDataFileService.name,
+    MockDataModel.name,
+    NotifierService.name,
+    PersistentStateService.name
+])
+.controller('MockDataEditorController', MockDataEditorController);

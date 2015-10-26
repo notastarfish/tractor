@@ -1,103 +1,85 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-
-// Module:
-var StepDefinitionEditor = require('../StepDefinitionEditor');
-
 // Dependencies:
-require('../../../Core/Services/ASTCreatorService');
-require('../../../Core/Services/StringToLiteralService');
-require('../../ComponentEditor/Models/ArgumentModel');
+import angular from 'angular';
+import ArgumentModel from '../../ComponentEditor/Models/ArgumentModel';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
+import StringToLiteralService from '../../../Core/Services/StringToLiteralService';
 
-var createExpectationModelConstructor = function (
+function createExpectationModelConstructor (
+    ArgumentModel,
     astCreatorService,
-    stringToLiteralService,
-    ArgumentModel
+    stringToLiteralService
 ) {
-    var ExpectationModel = function ExpectationModel (step) {
-        var component;
-        var action;
-        var args;
+    const action = Symbol();
+    const args = Symbol();
+    const component = Symbol();
+    const step = Symbol();
 
-        Object.defineProperties(this, {
-            step: {
-                get: function () {
-                    return step;
-                }
-            },
-            component: {
-                get: function () {
-                    return component;
-                },
-                set: function (newComponent) {
-                    component = newComponent;
-                    this.action = _.first(this.component.component.actions);
-                }
-            },
-            action: {
-                get: function () {
-                    return action;
-                },
-                set: function (newAction) {
-                    action = newAction;
-                    args = parseArguments.call(this);
-                }
-            },
-            arguments: {
-                get: function () {
-                    return args;
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            }
-        });
+    return class ExpectationModel {
+        constructor (_step) {
+            this[step] = _step;
 
-        this.component = _.first(this.step.stepDefinition.componentInstances);
-        this.condition = _.first(this.conditions);
-        this.value = '';
-    };
+            let [componentInstance] = this.step.stepDefinition.componentInstances;
+            this[component] = componentInstance;
 
-    ExpectationModel.prototype.conditions = ['equal', 'contain'];
+            this.conditions = ['equal', 'contain'];
+            let [condition] = this.conditions;
+            this.condition = condition;
 
-    return ExpectationModel;
+            this.value = '';
+        }
+
+        get step () {
+            return this[step];
+        }
+
+        get component () {
+            return this[component];
+        }
+        set component (newComponent) {
+            this[component] = newComponent;
+            let [firstAction] = this.component.component.actions
+            this.action = firstAction;
+        }
+
+        get action () {
+            return this[action];
+        }
+        set action (newAction) {
+            this[action] = newAction;
+            this[args] = parseArguments.call(this);
+        }
+
+        get ast () {
+            return toAST.call(this);
+        }
+    }
 
     function toAST () {
-        var ast = astCreatorService;
+        let template = 'expect(<%= component %>.<%= action %>(%= expectationArguments %)).to.eventually.<%= condition %>(<%= expectedResult %>); ';
 
-        var template = 'expect(<%= component %>.<%= action %>(%= expectationArguments %)).to.eventually.<%= condition %>(<%= expectedResult %>); ';
+        let expectationArguments = this.arguments.map(argument => argument.ast);
+        let expectedResult = astCreatorService.literal(stringToLiteralService.toLiteral(this.value) || this.value);
 
-        var expectationArguments = this.arguments.map(function (argument) {
-            return argument.ast;
-        });
-        var expectedResult = ast.literal(stringToLiteralService.toLiteral(this.value) || this.value);
-
-        return ast.template(template, {
-            component: ast.identifier(this.component.variableName),
-            action: ast.identifier(this.action.variableName),
-            expectationArguments: expectationArguments,
-            condition: ast.identifier(this.condition),
-            expectedResult: expectedResult
-        }).expression;
+        let action = astCreatorService.identifier(this.action.variableName);
+        let component = astCreatorService.identifier(this.component.variableName);
+        let condition = astCreatorService.identifier(this.condition);
+        return astCreatorService.template(template, { action, component, condition, expectationArguments, expectedResult }).expression;
     }
 
     function parseArguments () {
-        return this.action.parameters.map(function (parameter) {
+        return this.action.parameters.map(parameter => {
             return new ArgumentModel(null, {
                 name: parameter.name
             });
         });
     }
-};
+}
 
-StepDefinitionEditor.factory('ExpectationModel', function (
-    astCreatorService,
-    stringToLiteralService,
-    ArgumentModel
-) {
-    return createExpectationModelConstructor(astCreatorService, stringToLiteralService, ArgumentModel);
-});
+export default angular.module('expectationModel', [
+    ArgumentModel.name,
+    ASTCreatorService.name,
+    StringToLiteralService.name
+])
+.factory('ExpectationModel', createExpectationModelConstructor);

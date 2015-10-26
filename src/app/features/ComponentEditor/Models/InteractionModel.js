@@ -1,109 +1,87 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
-
 // Dependencies:
-require('../../../Core/Services/ASTCreatorService');
-require('./MethodModel');
+import angular from 'angular';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
+import MethodModel from './MethodModel';
 
-var createInteractionModelConstructor = function (
+function createInteractionModelConstructor (
     astCreatorService,
     MethodModel
 ) {
-    var ast = astCreatorService;
+    const action = Symbol();
+    const element = Symbol();
+    const method = Symbol();
+    const methodInstance = Symbol();
 
-    var InteractionModel = function InteractionModel (action) {
-        var element;
-        var method;
-        var methodInstance;
-
-        Object.defineProperties(this, {
-            action: {
-                get: function () {
-                    return action;
-                }
-            },
-            element: {
-                get: function () {
-                    return element;
-                },
-                set: function (newElement) {
-                    element = newElement;
-                    this.method = _.first(element.methods);
-                }
-            },
-            method: {
-                get: function () {
-                    return method;
-                },
-                set: function (newMethod) {
-                    method = newMethod;
-                    methodInstance = new MethodModel(this, this.method);
-                }
-            },
-            methodInstance: {
-                get: function () {
-                    return methodInstance;
-                }
-            },
-            arguments: {
-                get: function () {
-                    return methodInstance.arguments;
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            }
-        });
-    };
-
-    return InteractionModel;
-
-    function toAST () {
-        this.resultFunctionExpression = ast.functionExpression();
-
-        var template = '<%= interaction %>';
-        if (this.methodInstance.returns !== 'promise') {
-            template = 'new Promise(function (resolve) { resolve(' + template + '); });';
+    return class InteractionModel {
+        constructor (_action) {
+            this[action] = _action;
         }
 
-        var interaction = interactionAST.call(this);
+        get action () {
+            return this[action];
+        }
 
-        return ast.expression(template, {
-            interaction: interaction
-        });
+        get element () {
+            return this[element];
+        }
+
+        set element (newElement) {
+            this[element] = newElement;
+            let [method] = this.element.methods
+            this.method = method;
+        }
+
+        get method () {
+            return this[method];
+        }
+
+        set method (newMethod) {
+            this[method] = newMethod;
+            this[methodInstance] = new MethodModel(this, this.method);
+        }
+
+        get methodInstance () {
+            return this[methodInstance];
+        }
+
+        get arguments () {
+            return this.methodInstance.arguments;
+        }
+
+        get ast () {
+            return toAST.call(this);
+        }
+    }
+
+    function toAST () {
+        let template = '<%= interaction %>';
+        if (this.methodInstance.returns !== 'promise') {
+            template = `new Promise(function (resolve) { resolve(${template}); });`;
+        }
+
+        let interaction = interactionAST.call(this);
+        return astCreatorService.expression(template, { interaction });
     }
 
     function interactionAST () {
-        var template = '<%= element %>';
+        let template = '<%= element %>';
         if (this.element.variableName !== 'browser') {
-            template = 'self.' + template;
+            template = `self.${template}`;
         }
         template += '.<%= method %>(%= argumentValues %);';
 
-        var element = ast.identifier(this.element.variableName);
-        var method = ast.identifier(this.methodInstance.name);
-        var argumentValues = _.map(this.methodInstance.arguments, function (argument) {
-            return argument.ast;
-        });
+        let element = astCreatorService.identifier(this.element.variableName);
+        let method = astCreatorService.identifier(this.methodInstance.name);
+        let argumentValues = this.methodInstance.arguments.map(argument => argument.ast);
 
-        return ast.expression(template, {
-            element: element,
-            method: method,
-            argumentValues: argumentValues
-        });
+        return astCreatorService.expression(template, { element, method, argumentValues });
     }
-};
+}
 
-ComponentEditor.factory('InteractionModel', function (
-    astCreatorService,
-    MethodModel
-) {
-    return createInteractionModelConstructor(astCreatorService, MethodModel);
-});
+export default angular.module('interactionModel', [
+    ASTCreatorService.name,
+    MethodModel.name
+])
+.factory('InteractionModel', createInteractionModelConstructor);

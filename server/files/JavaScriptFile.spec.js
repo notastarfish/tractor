@@ -166,7 +166,7 @@ describe('server/files: JavaScriptFile:', () => {
         });
 
         it('should generate JavaScript from the AST', () => {
-            let data = { };
+            let data = {};
             let directory = {
                 addFile: _.noop
             };

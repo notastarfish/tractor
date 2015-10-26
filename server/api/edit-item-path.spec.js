@@ -452,9 +452,9 @@ describe('server/api: edit-item-path:', () => {
 
     it('should throw an error if it gets options that it doesn\'t understand', () => {
         let request = {
-            body: { }
+            body: {}
         };
-        let response = { };
+        let response = {};
 
         sinon.stub(errorHandler, 'handler');
 

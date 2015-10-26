@@ -1,36 +1,34 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-var Promise = require('bluebird');
-
-// Module:
-var Core = require('../Core');
-
 // Dependencies:
-require('../Services/ValidationService');
-require('../../features/FeatureEditor/Models/StepDeclarationModel');
+import angular from 'angular';
+import StepDeclarationModel from '../../features/FeatureEditor/Models/StepDeclarationModel';
+import ValidationService from '../Services/ValidationService';
 
-var ExampleNameValidator = function (
-    validationService,
-    StepDeclarationModel
-) {
-    return {
-        restrict: 'A',
+class ExampleNameValidator {
+    constructor (
+        StepDeclarationModel,
+        validationService
+    ) {
+        this.StepDeclarationModel = StepDeclarationModel;
+        this.validationService = validationService;
 
-        require: 'ngModel',
+        this.restrict = 'A';
+        this.require = 'ngModel';
+    }
 
-        link: link
-    };
-
-    function link ($scope, $element, $attrs, ngModelController) {
-        ngModelController.$validators.exampleName = function (value) {
-            var variableNames = StepDeclarationModel.getExampleVariableNames(value);
-            return _.filter(variableNames, function (variableName) {
-                return validationService.validateVariableName(variableName);
+    link ($scope, $element, $attrs, ngModelController) {
+        ngModelController.$validators.exampleName = value => {
+            let variableNames = this.StepDeclarationModel.getExampleVariableNames(value);
+            return variableNames.filter(variableName => {
+                return this.validationService.validateVariableName(variableName);
             }).length === variableNames.length;
         };
     }
-};
+}
 
-Core.directive('exampleName', ExampleNameValidator);
+export default angular.module('exampleName', [
+    StepDeclarationModel.name,
+    ValidationService.name
+])
+.directive('exampleName', ExampleNameValidator);

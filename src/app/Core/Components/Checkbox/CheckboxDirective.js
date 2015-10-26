@@ -1,42 +1,37 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var fs = require('fs');
+import changecase from 'change-case';
+import isUndefined from 'lodash.isundefined';
 
 // Dependencies:
-var camelcase = require('change-case').camel;
+import angular from 'angular';
+import template from './CheckBox.html';
 
-// Module:
-var Core = require('../../Core');
+class CheckboxDirective {
+    constructor () {
+        this.restrict = 'E';
 
-var CheckboxDirective = function () {
-    return {
-        restrict: 'E',
-
-        scope: {
+        this.scope = {
             model: '=',
             label: '@'
-        },
+        };
 
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/Checkbox.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        this.template = template;
+    }
 
-        link: link
-    };
-
-    function link ($scope) {
-        if (_.isUndefined($scope.model)) {
+    link ($scope) {
+        if (isUndefined($scope.model)) {
             throw new Error('The "tractor-checkbox" directive requires a "model" attribute.');
         }
 
-        if (_.isUndefined($scope.label)) {
+        if (isUndefined($scope.label)) {
             throw new Error('The "tractor-checkbox" directive requires an "label" attribute.');
         }
 
-        $scope.property = camelcase($scope.label);
+        $scope.property = changecase.camel($scope.label);
     }
-};
+}
 
-Core.directive('tractorCheckbox', CheckboxDirective);
+export default angular.module('tractorCheckbox', [])
+.directive('tractorCheckbox', CheckboxDirective);

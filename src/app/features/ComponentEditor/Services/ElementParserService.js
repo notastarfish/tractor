@@ -1,31 +1,29 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var assert = require('assert');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
+import assert from 'assert';
 
 // Dependencies:
-require('../Services/FilterParserService');
-require('../Models/ElementModel');
+import angular from 'angular';
+import ElementModel from '../Models/ElementModel';
+import FilterParserService from '../Services/FilterParserService';
 
-var ElementParserService = function ElementParserService (
-    FilterParserService,
-    ElementModel
-) {
-    return {
-        parse: parse
-    };
+class ElementParserService {
+    constructor (
+        ElementModel,
+        filterParserService
+    ) {
+        this.ElementModel = ElementModel;
+        this.filterParserService = filterParserService;
+    }
 
-    function parse (component, astObject, element) {
+    parse (component, astObject, element) {
         if (!element) {
-            element = new ElementModel(component);
+            element = new this.ElementModel(component);
         }
 
-        var elementCallExpression = astObject.expression.right;
-        var elementCallExpressionCallee = elementCallExpression.callee;
+        let elementCallExpression = astObject.expression.right;
+        let elementCallExpressionCallee = elementCallExpression.callee;
 
         try {
             assert(elementCallExpressionCallee.object.callee);
@@ -33,26 +31,26 @@ var ElementParserService = function ElementParserService (
                 assert(elementCallExpressionCallee.object.callee.property.name === 'filter');
                 elementCallExpressionCallee = elementCallExpressionCallee.object.callee;
                 elementCallExpression = elementCallExpression.callee.object;
-            } catch (e) { }
+            } catch (e) {}
 
-            parse(component, {
+            this.parse(component, {
                 expression: {
                     right: elementCallExpressionCallee.object
                 }
             }, element);
-        } catch (e) { }
+        } catch (e) {}
 
-        var notFirstElementBy = false;
-        var notFirstElementAllBy = false;
-        var notElementBy = false;
-        var notElementAllBy = false;
-        var notElementFilter = false;
-        var notElementGet = false;
+        let notFirstElementBy = false;
+        let notFirstElementAllBy = false;
+        let notElementBy = false;
+        let notElementAllBy = false;
+        let notElementFilter = false;
+        let notElementGet = false;
 
         try {
             assert(elementCallExpressionCallee.name === 'element');
-            var filterAST = _.first(elementCallExpression.arguments);
-            var filter = FilterParserService.parse(element, filterAST);
+            let [filterAST] = elementCallExpression.arguments;
+            let filter = this.filterParserService.parse(element, filterAST);
             element.addFilter(filter);
         } catch (e) {
             notFirstElementBy = true;
@@ -62,8 +60,8 @@ var ElementParserService = function ElementParserService (
             if (notFirstElementBy) {
                 assert(elementCallExpressionCallee.object.name === 'element');
                 assert(elementCallExpressionCallee.property.name === 'all');
-                var filterAllAST = _.first(elementCallExpression.arguments);
-                var filter = FilterParserService.parse(element, filterAllAST);
+                let [filterAllAST] = elementCallExpression.arguments;
+                let filter = this.filterParserService.parse(element, filterAllAST);
                 element.addFilter(filter);
             }
         } catch (e) {
@@ -73,8 +71,8 @@ var ElementParserService = function ElementParserService (
         try {
             if (notFirstElementAllBy) {
                 assert(elementCallExpressionCallee.property.name === 'element');
-                var filterAST = _.first(elementCallExpression.arguments);
-                var filter = FilterParserService.parse(element, filterAST);
+                let [filterAST] = elementCallExpression.arguments;
+                let filter = this.ilterParserService.parse(element, filterAST);
                 element.addFilter(filter);
             }
         } catch (e) {
@@ -84,8 +82,8 @@ var ElementParserService = function ElementParserService (
         try {
             if (notElementBy) {
                 assert(elementCallExpressionCallee.property.name === 'all');
-                var filterAllAST = _.first(elementCallExpression.arguments);
-                var filter = FilterParserService.parse(element, filterAllAST);
+                let [filterAllAST] = elementCallExpression.arguments;
+                let filter = this.filterParserService.parse(element, filterAllAST);
                 element.addFilter(filter);
             }
         } catch (e) {
@@ -95,8 +93,8 @@ var ElementParserService = function ElementParserService (
         try {
             if (notElementAllBy) {
                 assert(elementCallExpressionCallee.property.name === 'filter');
-                var filterAST = _.first(elementCallExpression.arguments);
-                var filter = FilterParserService.parse(element, filterAST);
+                let [filterAST] = elementCallExpression.arguments;
+                let filter = this.filterParserService.parse(element, filterAST);
                 element.addFilter(filter);
             }
         } catch (e) {
@@ -106,8 +104,8 @@ var ElementParserService = function ElementParserService (
         try {
             if (notElementFilter) {
                 assert(elementCallExpressionCallee.property.name === 'get');
-                var filterAST = _.first(elementCallExpression.arguments);
-                var filter = FilterParserService.parse(element, filterAST);
+                let [filterAST] = elementCallExpression.arguments;
+                let filter = this.filterParserService.parse(element, filterAST);
                 element.addFilter(filter);
             }
         } catch (e) {
@@ -120,6 +118,10 @@ var ElementParserService = function ElementParserService (
 
         return element;
     }
-};
+}
 
-ComponentEditor.service('ElementParserService', ElementParserService);
+export default angular.module('elementParserService', [
+    ElementModel.name,
+    FilterParserService.name
+])
+.service('elementParserService', ElementParserService);

@@ -1,88 +1,78 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-
-// Module:
-var FeatureEditor = require('../FeatureEditor');
+import flatten from 'lodash.flatten';
 
 // Dependencies:
-require('./ScenarioModel');
+import angular from 'angular';
+import ScenarioModel from './ScenarioModel';
 
-var createFeatureModelConstructor = function (
-    ScenarioModel,
+function createFeatureModelConstructor (
     FeatureIndent,
-    FeatureNewLine
+    FeatureNewLine,
+    ScenarioModel
 ) {
-    var FeatureModel = function FeatureModel (options) {
-        var scenarios = [];
+    const scenarios = Symbol();
 
-        Object.defineProperties(this, {
-            isSaved: {
-                get: function () {
-                    return !!(options && options.isSaved);
-                }
-            },
-            path: {
-                get: function () {
-                    return options && options.path;
-                }
-            },
-            scenarios: {
-                get: function () {
-                    return scenarios;
-                }
-            },
-            featureString: {
-                get: function () {
-                    return toFeatureString.call(this);
-                }
-            },
-            data: {
-                get: function () {
-                    return this.featureString;
-                }
-            }
-        });
+    return class FeatureModel {
+        constructor (options = {}) {
+            this.options = options;
+            this[scenarios] = [];
 
-        this.name = '';
-        this.inOrderTo = '';
-        this.asA = '';
-        this.iWant = '';
-    };
+            this.name = '';
+            this.inOrderTo = '';
+            this.asA = '';
+            this.iWant = '';
+        }
 
-    FeatureModel.prototype.addScenario = function () {
-        this.scenarios.push(new ScenarioModel());
-    };
+        get isSave () {
+            return !!this.options.isSaved;
+        }
 
-    FeatureModel.prototype.removeScenario = function (toRemove) {
-        _.remove(this.scenarios, function (scenario) {
-            return scenario === toRemove;
-        });
-    };
+        get path () {
+            return this.options.path;
+        }
 
-    return FeatureModel;
+        get scenarios () {
+            return this[scenarios];
+        }
+
+        get featureString () {
+            return toFeatureString.call(this);
+        }
+
+        get data () {
+            return this.featureString;
+        }
+
+        addScenario () {
+            this.scenarios.push(new ScenarioModel());
+        }
+
+        removeScenario (toRemove) {
+            this.scenarios.splice(this.scenarios.findIndex(scenario => {
+                return scenario === toRemove;
+            }), 1);
+        }
+    }
 
     function toFeatureString () {
-        var feature = 'Feature: ' + this.name;
+        let feature = `Feature: ${this.name}`;
 
-        var inOrderTo = FeatureIndent + 'In order to ' + this.inOrderTo;
-        var asA = FeatureIndent + 'As a ' + this.asA;
-        var iWant = FeatureIndent + 'I want ' + this.iWant;
+        let inOrderTo = `${FeatureIndent}In order to ${this.inOrderTo}`;
+        let asA = `${FeatureIndent}As a ${this.asA}`;
+        let iWant = `${FeatureIndent}I want ${this.iWant}`;
 
-        var scenarios = _.map(this.scenarios, function (scenario) {
-            return FeatureIndent + scenario.featureString;
+        let scenarios = this.scenarios.map(scenario => {
+            return `${FeatureIndent}${scenario.featureString}`;
         });
 
-        var lines = _.flatten([feature, inOrderTo, asA, iWant, scenarios]);
+        let lines = flatten([feature, inOrderTo, asA, iWant, scenarios]);
         return lines.join(FeatureNewLine);
     }
-};
+}
 
-FeatureEditor.factory('FeatureModel', function (
-    ScenarioModel,
-    FeatureIndent,
-    FeatureNewLine
-) {
-    return createFeatureModelConstructor(ScenarioModel, FeatureIndent, FeatureNewLine);
-});
+export default angular.module('featureModel', [
+    ScenarioModel.name
+])
+.factory('FeatureModel', createFeatureModelConstructor);

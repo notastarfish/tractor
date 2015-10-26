@@ -1,54 +1,46 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
+import dedent from 'dedent';
+import isNumber from 'lodash.isnumber';
 
 // Dependencies:
-require('../../../Core/Services/ASTCreatorService');
-require('../../../Core/Services/StringToLiteralService');
+import angular from 'angular';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
+import StringToLiteralService from '../../../Core/Services/StringToLiteralService';
 
-var createFilterModelConstructor = function (
+function createFilterModelConstructor (
     astCreatorService,
     stringToLiteralService
 ) {
-    var ast = astCreatorService;
+    const element = Symbol();
 
-    var FilterModel = function FilterModel (element) {
-        Object.defineProperties(this, {
-            element: {
-                get: function () {
-                    return element;
-                }
-            },
+    return class FilterModel {
+        constructor (_element) {
+            this[element] = _element;
 
-            isGroup: {
-                get: function () {
-                    return this.type === 'options' || this.type === 'repeater';
-                }
-            },
-            isText: {
-                get: function () {
-                    return this.type === 'text';
-                }
-            },
+            this.locator = '';
+            this.types = ['model', 'binding', 'text', 'css', 'options', 'repeater']
+            let [type] = this.types
+            this.type = type;
+        }
 
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            }
-        });
+        get element () {
+            return this[element];
+        }
 
-        this.type = _.first(this.types);
-        this.locator = '';
-    };
+        get isGroup () {
+            return this.type === 'options' || this.type === 'repeater';
+        }
 
-    FilterModel.prototype.types = ['model', 'binding', 'text', 'css', 'options', 'repeater'];
+        get isText () {
+            return this.type === 'text';
+        }
 
-    return FilterModel;
+        get ast () {
+            return toAST.call(this);
+        }
+    }
 
     function toAST () {
         if (this.isNested) {
@@ -59,46 +51,40 @@ var createFilterModelConstructor = function (
     }
 
     function toNestedAST () {
-        var locatorLiteral = ast.literal(this.locator);
-        var template = '';
+        let locator = astCreatorService.literal(this.locator);
 
-        var number = stringToLiteralService.toLiteral(locatorLiteral.value);
-        if (_.isNumber(number)) {
-            return ast.literal(number);
+        let number = stringToLiteralService.toLiteral(locator.value);
+        if (isNumber(number)) {
+            return astCreatorService.literal(number);
         } else {
-            template += '(function (element) {';
-            template += '    return element.getText().then(function (text) {';
-            template += '        return text.indexOf(<%= locator %>) !== -1;';
-            template += '    });';
-            template += '});';
-            return ast.expression(template, {
-                locator: locatorLiteral
-            });
+            let template = dedent(`
+                (function (element) {
+                    return element.getText().then(function (text) {
+                        return text.indexOf(<%= locator %>) !== -1;
+                    });
+                });
+            `);
+            return astCreatorService.expression(template, { locator });
         }
     }
 
     function toSingleAST () {
-        var locatorLiteral = ast.literal(this.locator);
-        var template = '';
+        let locator = astCreatorService.literal(this.locator);
+        let type = astCreatorService.identifier(this.type);
 
-        if (!this.isText) {
-            template += 'by.<%= type %>(<%= locator %>)';
-            return ast.expression(template, {
-                type: ast.identifier(this.type),
-                locator: locatorLiteral
-            });
+        let template = '';
+        if (this.isText) {
+            template += `by.cssContainingText('*', <%= locator %>)`;
+            return astCreatorService.expression(template, { locator });
         } else {
-            template += 'by.cssContainingText(\'*\', <%= locator %>)';
-            return ast.expression(template, {
-                locator: locatorLiteral
-            });
+            template += 'by.<%= type %>(<%= locator %>)';
+            return astCreatorService.expression(template, { type, locator });
         }
     }
-};
+}
 
-ComponentEditor.factory('FilterModel', function (
-    astCreatorService,
-    stringToLiteralService
-) {
-    return createFilterModelConstructor(astCreatorService, stringToLiteralService);
-});
+export default angular.module('filterModel', [
+    ASTCreatorService.name,
+    StringToLiteralService.name
+])
+.factory('FilterModel', createFilterModelConstructor);

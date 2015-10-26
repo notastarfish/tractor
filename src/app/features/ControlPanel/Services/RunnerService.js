@@ -1,30 +1,35 @@
 'use strict';
 
-// Module:
-var ControlPanel = require('../ControlPanel');
-
 // Dependencies:
-require('../../../Core/Components/Notifier/NotifierService');
+import angular from 'angular';
+import NotifierService from '../../../Core/Components/Notifier/NotifierService';
+import RealTimeService from '../../../Core/Services/RealTimeService';
 
-var RunnerService = function RunnerService (
-    notifierService,
-    realTimeService
-) {
-    return {
-        runProtractor: runProtractor
-    };
+class RunnerService {
+    constructor (
+        notifierService,
+        realTimeService
+    ) {
+        this.notifierService = notifierService;
+        this.realTimeService = realTimeService;
+    }
 
-    function runProtractor (options) {
-        var connection = realTimeService.connect('run-protractor', {
-            'protractor-out': notify,
-            'protractor-err': notify
+    runProtractor (options) {
+        let connection = this.realTimeService.connect('run-protractor', {
+            'protractor-out': notify.bind(this),
+            'protractor-err': notify.bind(this)
         });
         connection.emit('run', options);
     }
+}
 
-    function notify (data) {
-        notifierService[data.type](data.message);
-    }
-};
+function notify (data) {
+    let { type, message } = data;
+    this.notifierService[type](message);
+}
 
-ControlPanel.service('runnerService', RunnerService);
+export default angular.module('runnerService', [
+    NotifierService.name,
+    RealTimeService.name
+])
+.service('runnerService', RunnerService);

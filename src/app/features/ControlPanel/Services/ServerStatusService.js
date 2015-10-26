@@ -1,45 +1,45 @@
 'use strict';
 
-// Module:
-var ControlPanel = require('../ControlPanel');
-
 // Dependencies:
-require('../../../Core/Components/Notifier/NotifierService');
-require('../../../Core/Services/RealtimeService');
+import angular from 'angular';
+import NotifierService from '../../../Core/Components/Notifier/NotifierService';
+import RealTimeService from '../../../Core/Services/RealTimeService';
 
-var ServerStatusService = function ServerStatusService (
-    notifierService,
-    realTimeService,
-    $rootScope
-) {
-    var serverIsRunning = false;
-    monitorServerStatus();
+class ServerStatusService {
+    constructor (
+        $rootScope,
+        notifierService,
+        realTimeService
+    ) {
+        this.$rootScope = $rootScope;
+        this.notifierService = notifierService;
+        this.realTimeService = realTimeService;
 
-    return {
-        isServerRunning: isServerRunning
-    };
+        this.isServerRunning = false;
+        this.monitorServerStatus();
+    }
 
-    function monitorServerStatus (options) {
-        realTimeService.connect('server-status', {
-            'connect': onConnect,
-            'disconnect': onDisconnect
+    monitorServerStatus () {
+        this.realTimeService.connect('server-status', {
+            connect: onConnect.bind(this),
+            disconnect: onDisconnect.bind(this)
         });
     }
+}
 
-    function onConnect () {
-        serverIsRunning = true;
-        $rootScope.$apply();
-    }
+function onConnect () {
+    this.isServerRunning = true;
+    this.$rootScope.$apply();
+}
 
-    function onDisconnect () {
-        serverIsRunning = false;
-        $rootScope.$apply();
-        notifierService.error('Tractor server stalled...');
-    }
+function onDisconnect () {
+    this.isServerRunning = false;
+    this.$rootScope.$apply();
+    this.notifierService.error('Tractor server stalled...');
+}
 
-    function isServerRunning () {
-        return serverIsRunning;
-    }
-};
-
-ControlPanel.service('serverStatusService', ServerStatusService);
+export default angular.module('serverStatusService', [
+    NotifierService.name,
+    RealTimeService.name
+])
+.service('serverStatusService', ServerStatusService);

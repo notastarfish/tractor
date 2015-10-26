@@ -1,31 +1,31 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var assert = require('assert');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
+import assert from 'assert';
+import isNumber from 'lodash.isnumber';
 
 // Dependencies:
-require('../Models/FilterModel');
+import angular from 'angular';
+import FilterModel from '../Models/FilterModel';
 
-var FilterParserService = function FilterParserService (FilterModel) {
-    return {
-        parse: parse
-    };
+class FilterParserService {
+    constructor (
+        FilterModel
+    ) {
+        this.FilterModel = FilterModel;
+    }
 
-    function parse (element, astObject) {
-        var filter = new FilterModel(element);
+    parse (element, astObject) {
+        let filter = new this.FilterModel(element);
 
-        var notModelBindingCSSOptionsRepeater = false;
-        var notText = false;
-        var notAllIndex = false;
-        var notAllString = false;
+        let notModelBindingCSSOptionsRepeater = false;
+        let notText = false;
+        let notAllIndex = false;
+        let notAllString = false;
 
         try {
             assert(astObject.callee.property.name !== 'cssContainingText');
-            var locatorLiteral = _.first(astObject.arguments);
+            let [locatorLiteral] = astObject.arguments;
             filter.locator = locatorLiteral.value;
             filter.type = astObject.callee.property.name;
         } catch (e) {
@@ -35,9 +35,9 @@ var FilterParserService = function FilterParserService (FilterModel) {
         try {
             if (notModelBindingCSSOptionsRepeater) {
                 assert(astObject.callee.property.name === 'cssContainingText');
-                var allSelectorLiteral = _.first(astObject.arguments);
+                let [allSelectorLiteral] = astObject.arguments;
                 assert(allSelectorLiteral.value === '*');
-                var locatorLiteral = astObject.arguments[1];
+                let locatorLiteral = astObject.arguments[1];
                 filter.locator = locatorLiteral.value;
                 filter.type = 'text';
             }
@@ -47,8 +47,8 @@ var FilterParserService = function FilterParserService (FilterModel) {
 
         try {
             if (notText) {
-                assert(_.isNumber(astObject.value));
-                filter.locator = '' + astObject.value;
+                assert(isNumber(astObject.value));
+                filter.locator = String(astObject.value);
                 filter.type = 'text';
             }
         } catch (e) {
@@ -57,10 +57,10 @@ var FilterParserService = function FilterParserService (FilterModel) {
 
         try {
             if (notAllIndex) {
-                var getTextThenReturnStatement = _.first(astObject.body.body);
-                var checkFoundTextFunctionExpression = _.first(getTextThenReturnStatement.argument.arguments);
-                var checkFoundTextReturnStatement = _.first(checkFoundTextFunctionExpression.body.body);
-                var locatorLiteral = _.first(checkFoundTextReturnStatement.argument.left.arguments);
+                let [getTextThenReturnStatement] = astObject.body.body;
+                let [checkFoundTextFunctionExpression] = getTextThenReturnStatement.argument.arguments;
+                let [checkFoundTextReturnStatement] = checkFoundTextFunctionExpression.body.body;
+                let [locatorLiteral] = checkFoundTextReturnStatement.argument.left.arguments;
                 filter.locator = locatorLiteral.value;
                 filter.type = 'text';
             }
@@ -74,6 +74,9 @@ var FilterParserService = function FilterParserService (FilterModel) {
 
         return filter;
     }
-};
+}
 
-ComponentEditor.service('FilterParserService', FilterParserService);
+export default angular.module('filterParserService', [
+    FilterModel.name
+])
+.service('filterParserService', FilterParserService);

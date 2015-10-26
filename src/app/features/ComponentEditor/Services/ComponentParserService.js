@@ -1,54 +1,55 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var assert = require('assert');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
+import assert from 'assert';
 
 // Dependencies:
-require('../../../Core/Services/PersistentStateService');
-require('../Services/ElementParserService');
-require('../Services/ActionParserService');
-require('../Models/ComponentModel');
+import angular from 'angular';
+import ActionParserService from '../Services/ActionParserService';
+import ComponentModel from '../Models/ComponentModel';
+import ElementParserService from '../Services/ElementParserService';
+import PersistentStateService from '../../../Core/Services/PersistentStateService';
 
-var ComponentParserService = function ComponentParserService (
-    persistentStateService,
-    ElementParserService,
-    ActionParserService,
-    ComponentModel
-) {
-    return {
-        parse: parse
-    };
+class ComponentParserService {
+    constructor (
+        actionParserService,
+        ComponentModel,
+        elementParserService,
+        persistentStateService
+    ) {
+        this.actionParserService = actionParserService;
+        this.ComponentModel = ComponentModel;
+        this.elementParserService = elementParserService;
+        this.persistentStateService = persistentStateService;
+    }
 
-    function parse (componentFile) {
+    parse (componentFile) {
         try {
-            var ast = componentFile.ast;
-            var meta = JSON.parse(_.first(ast.comments).value);
+            let { ast } = componentFile;
+            let [metaComment] = ast.comments;
+            let meta = JSON.parse(metaComment.value);
 
-            var component = new ComponentModel({
+            let component = new this.ComponentModel({
                 isSaved: true,
                 path: componentFile.path
             });
             component.name = meta.name;
-            var state = persistentStateService.get(component.name);
+            let state = this.persistentStateService.get(component.name);
 
-            var componentModuleExpressionStatement = _.first(ast.body);
-            var moduleBlockStatement = componentModuleExpressionStatement.expression.right.callee.body;
+            let [componentModuleExpressionStatement] = ast.body;
+            let moduleBlockStatement = componentModuleExpressionStatement.expression.right.callee.body;
 
-            _.each(moduleBlockStatement.body, function (statement, index) {
+            moduleBlockStatement.body.forEach((statement, index) => {
                 try {
                     assert(statement.argument.name);
                     return;
-                } catch (e) { }
+                } catch (e) {}
 
                 try {
-                    var constructorDeclarator = _.first(statement.declarations);
-                    var constructorBlockStatement = constructorDeclarator.init.body;
-                    _.each(constructorBlockStatement.body, function (statement) {
-                        var domElement = ElementParserService.parse(component, statement);
+                    let [constructorDeclarator] = statement.declarations;
+                    let constructorBlockStatement = constructorDeclarator.init.body;
+                    constructorBlockStatement.body.forEach((statement) => {
+                        let domElement = this.elementParserService.parse(component, statement);
                         assert(domElement);
                         domElement.name = meta.elements[component.domElements.length].name;
                         domElement.minimised = !!state[domElement.name];
@@ -56,26 +57,32 @@ var ComponentParserService = function ComponentParserService (
                         component.domElements.push(domElement);
                     });
                     return;
-                } catch (e) { }
+                } catch (e) {}
 
                 try {
-                    var actionMeta = meta.actions[component.actions.length];
-                    var action = ActionParserService.parse(component, statement, actionMeta);
+                    let actionMeta = meta.actions[component.actions.length];
+                    let action = this.actionParserService.parse(component, statement, actionMeta);
                     assert(action);
                     action.name = actionMeta.name;
                     action.minimised = !!state[action.name];
                     component.actions.push(action);
                     return;
-                } catch (e) { }
+                } catch (e) {}
 
                 console.warn('Invalid Component:', statement, index);
             });
 
             return component;
         } catch (e) {
-            return new ComponentModel();
+            return new this.ComponentModel();
         }
     }
-};
+}
 
-ComponentEditor.service('ComponentParserService', ComponentParserService);
+export default angular.module('componentParserService', [
+    ActionParserService.name,
+    ComponentModel.name,
+    ElementParserService.name,
+    PersistentStateService.name
+])
+.service('componentParserService', ComponentParserService);

@@ -1,32 +1,28 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-var fs = require('fs');
-
-// Module:
-var Core = require('../../Core');
-
 // Dependencies:
-require('./ConfirmDialogController');
+import angular from 'angular';
+import ConfirmDialogController from './ConfirmDialogController';
+import template from './ConfirmDialog.html';
 
-var ConfirmDialogDirective = function () {
-    return {
-        restrict: 'E',
-        transclude: true,
+class ConfirmDialogDirective {
+    constructor () {
+        this.restrict = 'E';
+        this.transclude = true;
 
-        scope: {
+        this.scope = {
             trigger: '='
-        },
+        };
 
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/ConfirmDialog.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        this.template = template;
 
-        controller: 'ConfirmDialogController',
-        controllerAs: 'confirmDialog',
-        bindToController: true,
-    };
-};
+        this.controller = 'ConfirmDialogController';
+        this.controllerAs = 'confirmDialog';
+        this.bindToController = true;
+    }
+}
 
-Core.directive('tractorConfirmDialog', ConfirmDialogDirective);
+export default angular.module('tractorConfirmDialog', [
+    ConfirmDialogController.name
+])
+.directive('tractorConfirmDialog', ConfirmDialogDirective);

@@ -1,19 +1,23 @@
 'use strict';
 
-// Module:
-var StepDefinitionEditor = require('../StepDefinitionEditor');
-
 // Dependencies:
-var FileService = require('../../../Core/Services/FileService');
-require('./StepDefinitionParserService');
-require('../../../Core/Services/FileStructureService');
+import angular from 'angular';
+import FileService from '../../../Core/Services/FileService';
+import FileStructureService from '../../../Core/Services/FileStructureService';
+import StepDefinitionParserService from './StepDefinitionParserService';
 
-var StepDefinitionFileService = function StepDefinitionFileService (
-    $http,
-    StepDefinitionParserService,
-    fileStructureService
-) {
-    return FileService($http, StepDefinitionParserService, fileStructureService, 'step-definitions');
-};
+class StepDefinitionFileService extends FileService {
+    constructor (
+        $http,
+        fileStructureService,
+        stepDefinitionParserService
+    ) {
+        super($http, stepDefinitionParserService, fileStructureService, 'step-definitions');
+    }
+}
 
-StepDefinitionEditor.service('StepDefinitionFileService', StepDefinitionFileService);
+export default angular.module('stepDefinitionFileService', [
+    FileStructureService.name,
+    StepDefinitionParserService.name
+])
+.service('StepDefinitionFileService', StepDefinitionFileService);

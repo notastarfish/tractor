@@ -1,42 +1,36 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var fs = require('fs');
+import changecase from 'change-case';
+import isUndefined from 'lodash.isundefined';
 
 // Dependencies:
-var camelcase = require('change-case').camel;
+import angular from 'angular';
+import template from './TextInput.html';
 
-// Module:
-var Core = require('../../Core');
+class TextInputDirective {
+    constructor () {
+        this.restrict = 'E';
 
-var TextInputDirective = function () {
-    return {
-        restrict: 'E',
-
-        scope: {
+        this.scope = {
             model: '=',
             label: '@',
             example: '@'
-        },
+        };
 
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/TextInput.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        this.template = template;
+    }
 
-        link: link
-    };
-
-    function link ($scope, $element, $attrs) {
-        if (_.isUndefined($scope.model)) {
+    link ($scope, $element, $attrs) {
+        if (isUndefined($scope.model)) {
             throw new Error('The "tractor-text-input" directive requires a "model" attribute.');
         }
 
-        if (_.isUndefined($scope.label)) {
+        if (isUndefined($scope.label)) {
             throw new Error('The "tractor-text-input" directive requires a "label" attribute.');
         }
 
-        if (_.isUndefined($attrs.form)) {
+        if (isUndefined($attrs.form)) {
             throw new Error('The "tractor-text-input" directive requires a "form" attribute.');
         }
 
@@ -44,8 +38,9 @@ var TextInputDirective = function () {
         $scope.id = Math.floor(Math.random() * Date.now());
         $scope.validateFileName = Object.prototype.hasOwnProperty.call($attrs, 'validateFileName');
 
-        $scope.property = camelcase($scope.label);
+        $scope.property = changecase.camel($scope.label);
     }
-};
+}
 
-Core.directive('tractorTextInput', TextInputDirective);
+export default angular.module('tractorTextInput', [])
+.directive('tractorTextInput', TextInputDirective);

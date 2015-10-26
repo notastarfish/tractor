@@ -1,20 +1,16 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
+import isNumber from 'lodash.isnumber';
 
-// Module:
-var Core = require('../Core');
+// Dependencies:
+import angular from 'angular';
 
-var StringToLiteralService = function () {
-    return {
-        toLiteral: toLiteral
-    };
-
-    function toLiteral (value) {
-        var boolean = toBoolean(value);
-        var number = toNumber(value);
-        var nil = toNull(value);
+class StringToLiteralService {
+    toLiteral (value) {
+        let boolean = toBoolean(value);
+        let number = toNumber(value);
+        let nil = toNull(value);
         if (boolean != null) {
             return boolean;
         } else if (number != null) {
@@ -25,29 +21,30 @@ var StringToLiteralService = function () {
             return value;
         }
     }
+}
 
-    function toBoolean (value) {
-        if (value === 'true') {
-            return true;
-        } else if (value === 'false') {
-            return false;
-        }
+function toBoolean (value) {
+    if (value === 'true') {
+        return true;
+    } else if (value === 'false') {
+        return false;
     }
+}
 
-    function toNumber (value) {
-        var number = +value;
-        if (value === 'NaN') {
-            return NaN;
-        } else if (value && _.isNumber(number) && !_.isNaN(number)) {
-            return number;
-        }
+function toNumber (value) {
+    let number = +value;
+    if (value === 'NaN') {
+        return NaN;
+    } else if (value && isNumber(number) && !Number.isNaN(number)) {
+        return number;
     }
+}
 
-    function toNull (value) {
-        if (value === 'null') {
-            return null;
-        }
+function toNull (value) {
+    if (value === 'null') {
+        return null;
     }
-};
+}
 
-Core.service('stringToLiteralService', StringToLiteralService);
+export default angular.module('stringToLiteralService', [])
+.service('stringToLiteralService', StringToLiteralService);

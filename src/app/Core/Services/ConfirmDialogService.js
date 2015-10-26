@@ -1,28 +1,20 @@
 'use strict';
 
 // Utilities:
-var Promise = require('bluebird');
+import Promise from 'bluebird';
 
-// Module:
-var Core = require('../Core');
+// Dependencies:
+import angular from 'angular';
 
-var ConfirmDialogService = function ConfirmDialogService () {
-    return {
-        show: show
-    };
-
-    function show () {
-        var resolve, reject;
-        var promise = new Promise(function() {
-            resolve = arguments[0];
-            reject = arguments[1];
+class ConfirmDialogService {
+    show () {
+        let resolve, reject;
+        let promise = new Promise((...args) => {
+            [resolve, reject] = args;
         });
-        return {
-            resolve: resolve,
-            reject: reject,
-            promise: promise
-        };
+        return { resolve, reject, promise };
     }
-};
+}
 
-Core.service('confirmDialogService', ConfirmDialogService);
+export default angular.module('confirmDialogService', [])
+.service('confirmDialogService', ConfirmDialogService);

@@ -100,7 +100,7 @@ describe('server/file-structure: FileStructure:', () => {
                 availableMockData: undefined,
                 /* eslint-enable no-undefined */
                 directory,
-                references: { }
+                references: {}
             });
 
             Directory.prototype.getDirectory.restore();
@@ -125,7 +125,7 @@ describe('server/file-structure: FileStructure:', () => {
                 availableComponents: [component1, component2],
                 availableMockData: [],
                 directory,
-                references: { }
+                references: {}
             });
 
             Directory.prototype.getDirectory.restore();
@@ -150,7 +150,7 @@ describe('server/file-structure: FileStructure:', () => {
                 availableComponents: [],
                 availableMockData: [mockData1, mockData2],
                 directory,
-                references: { }
+                references: {}
             });
 
             Directory.prototype.getDirectory.restore();

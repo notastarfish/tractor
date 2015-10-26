@@ -1,19 +1,23 @@
 'use strict';
 
-// Module:
-var MockDataEditor = require('../MockDataEditor');
-
 // Dependencies:
-var FileService = require('../../../Core/Services/FileService');
-require('./MockDataParserService');
-require('../../../Core/Services/FileStructureService');
+import angular from 'angular';
+import FileService from '../../../Core/Services/FileService';
+import FileStructureService from '../../../Core/Services/FileStructureService';
+import MockDataParserService from './MockDataParserService';
 
-var MockDataFileService = function MockDataFileService (
-    $http,
-    MockDataParserService,
-    fileStructureService
-) {
-    return FileService($http, MockDataParserService, fileStructureService, 'mock-data');
-};
+class MockDataFileService extends FileService {
+    constructor (
+        $http,
+        fileStructureService,
+        mockDataParserService
+    ) {
+        super($http, mockDataParserService, fileStructureService, 'mock-data');
+    }
+}
 
-MockDataEditor.service('MockDataFileService', MockDataFileService);
+export default angular.module('mockDataFileService', [
+    FileStructureService.name,
+    MockDataParserService.name
+])
+.service('MockDataFileService', MockDataFileService);

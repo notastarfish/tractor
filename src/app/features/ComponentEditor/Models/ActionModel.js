@@ -1,160 +1,147 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-
-// Module:
-var ComponentEditor = require('../ComponentEditor');
+import changecase from 'change-case';
+import dedent from 'dedent';
 
 // Dependencies:
-var camelcase = require('change-case').camel;
-require('../../../Core/Services/ASTCreatorService');
-require('./ParameterModel');
-require('./InteractionModel');
+import angular from 'angular';
+import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
+import InteractionModel from './InteractionModel';
+import ParameterModel from './ParameterModel';
 
-var createActionModelConstructor = function (
+function createActionModelConstructor (
     astCreatorService,
-    ParameterModel,
-    InteractionModel
+    InteractionModel,
+    ParameterModel
 ) {
-    var ast = astCreatorService;
+    const component = Symbol();
+    const interactions = Symbol();
+    const parameters = Symbol();
 
-    var ActionModel = function ActionModel (component) {
-        var interactions = [];
-        var parameters = [];
+    return class ActionModel {
+        constructor (_component) {
+            this[component] = _component;
+            this[interactions] = [];
+            this[parameters] = [];
 
-        Object.defineProperties(this, {
-            component: {
-                get: function () {
-                    return component;
-                }
-            },
-            interactions: {
-                get: function () {
-                    return interactions;
-                }
-            },
-            parameters: {
-                get: function () {
-                    return parameters;
-                }
-            },
-            variableName: {
-                get: function () {
-                    return camelcase(this.name);
-                }
-            },
-            meta: {
-                get: function () {
-                    return {
-                        name: this.name,
-                        parameters: this.parameters.map(function (parameter) {
-                            return parameter.meta;
-                        })
-                    };
-                }
-            },
-            ast: {
-                get: function () {
-                    return toAST.call(this);
-                }
-            }
-        });
+            this.name = '';
+        }
 
-        this.name = '';
-    };
+        get component () {
+            return this[component];
+        }
 
-    ActionModel.prototype.addParameter = function () {
-        this.parameters.push(new ParameterModel(this));
-    };
+        get interactions () {
+            return this[interactions];
+        }
 
-    ActionModel.prototype.removeParameter = function (toRemove) {
-        _.remove(this.parameters, function (parameter) {
-            return parameter === toRemove;
-        });
-    };
+        get parameters () {
+            return this[parameters];
+        }
 
-    ActionModel.prototype.addInteraction = function () {
-        var interaction = new InteractionModel(this);
-        interaction.element = this.component.browser;
-        this.interactions.push(interaction);
-    };
+        get variableName () {
+            return changecase.camel(this.name);
+        }
 
-    ActionModel.prototype.removeInteraction = function (toRemove) {
-        _.remove(this.interactions, function (interaction) {
-            return interaction === toRemove;
-        });
-    };
+        get meta () {
+            return {
+                name: this.name,
+                parameters: this.parameters.map(parameter => parameter.meta)
+            };
+        }
 
-    ActionModel.prototype.getAllVariableNames = function () {
-        return this.component.getAllVariableNames(this);
-    };
+        get ast () {
+            return toAST.call(this);
+        }
 
-    return ActionModel;
+        addParameter () {
+            this.parameters.push(new ParameterModel(this));
+        }
+
+        removeParameter (toRemove) {
+            this.parameters.splice(this.parameters.findIndex(parameter => {
+                return parameter === toRemove;
+            }), 1);
+        }
+
+        addInteraction () {
+            let interaction = new InteractionModel(this);
+            interaction.element = this[component].browser;
+            this.interactions.push(interaction);
+        }
+
+        removeInteraction (toRemove) {
+            this.interactions.splice(this.interactions.findIndex(interaction => {
+                return interaction === toRemove;
+            }), 1);
+        }
+
+        getAllVariableNames () {
+            return this[component].getAllVariableNames(this);
+        }
+    }
 
     function toAST () {
-        var component = ast.identifier(this.component.variableName);
-        var action = ast.identifier(this.variableName);
-        var parameters = _.map(this.parameters, function (parameter) {
-            return parameter.ast;
-        });
-        var interactions = interactionsAST.call(this);
+        let component = astCreatorService.identifier(this.component.variableName);
+        let action = astCreatorService.identifier(this.variableName);
+        let parameters = this.parameters.map(parameter => parameter.ast);
+        let interactions = interactionsAST.call(this);
 
-        var template = '<%= component %>.prototype.<%= action %> = function (%= parameters %) {';
+        let template = '<%= component %>.prototype.<%= action %> = function (%= parameters %) {';
         if (interactions) {
-            template += 'var self = this;';
-            template += 'return <%= interactions %>;';
+            template += dedent(`
+                var self = this;
+                return <%= interactions %>;
+            `);
         }
         template += '};';
 
-        return ast.expression(template, {
-            component: component,
-            action: action,
-            parameters: parameters,
-            interactions: interactions
-        });
+        return astCreatorService.expression(template, { component, action, parameters, interactions });
     }
 
     function interactionsAST () {
-        var template = '';
-        var fragments = {};
-        _.reduce(this.interactions, function (previousInteraction, interaction, index) {
-            var interactionTemplate = '<%= interaction' + index + ' %>';
+        let template = '';
+        let fragments = {};
+        this.interactions.reduce((previousInteraction, interaction, index) => {
+            let interactionTemplate = `<%= interaction${index} %>`;
 
-            if (!template.length) {
-                template += interactionTemplate;
+            if (template.length) {
+                template += dedent(`
+                    .then(function (%= parameter${index} %) {
+                        return ${interactionTemplate};
+                    })
+                `);
             } else {
-                template += '.then(function (%= parameter' + index + '%) {';
-                template += '    return ' + interactionTemplate + ';';
-                template += '})';
+                template += interactionTemplate;
             }
 
-            fragments['interaction' + index] = interaction.ast;
-            fragments['parameter' + index] = [];
+            fragments[`interaction${index}`] = interaction.ast;
+            fragments[`parameter${index}`] = [];
 
-            var previousResult = previousInteractionResult(previousInteraction);
+            let previousResult = previousInteractionResult(previousInteraction);
             if (previousResult) {
-                fragments['parameter' + index].push(ast.identifier(previousResult));
+                let parameter = astCreatorService.identifier(previousResult);
+                fragments[`parameter${index}`].push(parameter);
             }
 
             return interaction;
         }, {});
 
-        return ast.expression(template, fragments);
+        return astCreatorService.expression(template, fragments);
     }
 
     function previousInteractionResult (previous) {
-        var returns = previous && previous.method && previous.method.returns;
+        let returns = previous && previous.method && previous.method.returns;
         if (returns && previous.method[returns]) {
             return previous.method[returns].name;
         }
     }
-};
+}
 
-ComponentEditor.factory('ActionModel', function (
-    astCreatorService,
-    ParameterModel,
-    InteractionModel
-) {
-    return createActionModelConstructor(astCreatorService, ParameterModel, InteractionModel);
-});
+export default angular.module('actionModel', [
+    ASTCreatorService.name,
+    InteractionModel.name,
+    ParameterModel.name
+])
+.factory('ActionModel', createActionModelConstructor);

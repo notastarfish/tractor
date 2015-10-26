@@ -1,109 +1,96 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-
-// Module:
-var FeatureEditor = require('../FeatureEditor');
+import flatten from 'lodash.flatten';
+import pluck from 'lodash.pluck';
+import unique from 'lodash.unique';
 
 // Dependencies:
-require('./StepDeclarationModel');
-require('./ExampleModel');
+import angular from 'angular';
+import ExampleModel from './ExampleModel';
+import StepDeclarationModel from './StepDeclarationModel';
 
-var createScenarioModelConstructor = function (
-    StepDeclarationModel,
+function createScenarioModelConstructor (
     ExampleModel,
     FeatureIndent,
-    FeatureNewLine
+    FeatureNewLine,
+    StepDeclarationModel
 ) {
-    var ScenarioModel = function ScenarioModel () {
-        var stepDeclarations = [];
-        var examples = [];
+    const stepDeclarations = Symbol();
+    const examples = Symbol();
 
-        Object.defineProperties(this, {
-            stepDeclarations: {
-                get: function () {
-                    return stepDeclarations;
-                }
-            },
-            examples: {
-                get: function () {
-                    return examples;
-                }
-            },
-            exampleVariables: {
-                get: function () {
-                    return getExampleVariables.call(this, this.stepDeclarations);
-                }
-            },
-            featureString: {
-                get: function () {
-                    return toFeatureString.call(this);
-                }
-            }
-        });
+    return class ScenarioModel {
+        constructor () {
+            this[stepDeclarations] = [];
+            this[examples] = [];
 
-        this.name = '';
-    };
+            this.name = '';
+        }
 
-    ScenarioModel.prototype.addStepDeclaration = function () {
-        this.stepDeclarations.push(new StepDeclarationModel());
-    };
+        get stepDeclarations () {
+            return this[stepDeclarations]
+        }
 
-    ScenarioModel.prototype.removeStepDeclaration = function (toRemove) {
-        _.remove(this.stepDeclarations, function (stepDeclaration) {
-            return stepDeclaration === toRemove;
-        });
-    };
+        get examples () {
+            return this[examples];
+        }
 
-    ScenarioModel.prototype.addExample = function () {
-        this.examples.push(new ExampleModel(this));
-    };
+        get exampleVariables () {
+            return getExampleVariables.call(this, this.stepDeclarations);
+        }
 
-    ScenarioModel.prototype.removeExample = function (toRemove) {
-        _.remove(this.examples, function (example) {
-            return example === toRemove;
-        });
-    };
+        get featureString () {
+            return toFeatureString.call(this);
+        }
 
-    return ScenarioModel;
+        addStepDeclaration () {
+            this.stepDeclarations.push(new StepDeclarationModel());
+        }
+
+        removeStepDeclaration (toRemove) {
+            this.stepDeclarations.splice(this.stepDeclarations.findIndex(stepDeclaration => {
+                return stepDeclaration === toRemove;
+            }), 1);
+        }
+
+        addExample () {
+            this.examples.push(new ExampleModel(this));
+        }
+
+        removeExample (toRemove) {
+            this.examples.splice(this.examples.findIndex(example => {
+                return example === toRemove;
+            }), 1);
+        }
+    }
 
     function getExampleVariables (stepDeclarations) {
-        return _.chain(stepDeclarations)
-        .pluck('step')
-        .map(StepDeclarationModel.getExampleVariableNames)
-        .flatten()
-        .unique().value();
+        return unique(flatten(pluck(stepDeclarations, 'step')
+        .map(StepDeclarationModel.getExampleVariableNames)))
     }
 
     function toFeatureString () {
-        var scenario = 'Scenario' + (this.examples.length ? ' Outline' : '') + ': ' + this.name;
+        let scenario = `Scenario${(this.examples.length ? ' Outline' : '')}: ${this.name}`;
 
-        var stepDeclarations = _.map(this.stepDeclarations, function (stepDeclaration) {
-            return FeatureIndent + FeatureIndent + stepDeclaration.feature;
+        let stepDeclarations = this.stepDeclarations.map(stepDeclaration => {
+            return `${FeatureIndent}${FeatureIndent}${stepDeclaration.feature}`;
         });
 
-        var lines = [scenario, stepDeclarations];
-
+        let lines = [scenario, stepDeclarations];
         if (this.examples.length) {
-            lines.push(FeatureIndent + FeatureIndent + 'Examples:');
-            var variables = '| ' + this.exampleVariables.join(' | ') + ' |';
-            lines.push(FeatureIndent + FeatureIndent + FeatureIndent + variables);
-            _.each(this.examples, function (example) {
-                lines.push(example.feature);
-            }, this);
+            lines.push(`${FeatureIndent}${FeatureIndent}Examples:`);
+            let variables = this.exampleVariables.join(' | ');
+            lines.push(`${FeatureIndent}${FeatureIndent}${FeatureIndent}| ${variables} |`);
+            this.examples.forEach(example => lines.push(example.feature));
         }
 
-        lines = _.flatten(lines);
+        lines = flatten(lines);
         return lines.join(FeatureNewLine);
     }
-};
+}
 
-FeatureEditor.factory('ScenarioModel', function (
-    StepDeclarationModel,
-    ExampleModel,
-    FeatureIndent,
-    FeatureNewLine
-) {
-    return createScenarioModelConstructor(StepDeclarationModel, ExampleModel, FeatureIndent, FeatureNewLine);
-});
+export default angular.module('scenarioModel', [
+    ExampleModel.name,
+    StepDeclarationModel.name
+])
+.factory('ScenarioModel', createScenarioModelConstructor);

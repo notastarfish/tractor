@@ -1,29 +1,27 @@
 'use strict';
 
-// Utilities:
-var fs = require('fs');
-
-// Module:
-var Core = require('../../Core');
-
 // Dependencies:
-require('./NotifierService');
+import angular from 'angular';
+import NotifierService from './NotifierService';
+import template from './Notifier.html'
 
-var NotifierDirective = function (
-    notifierService
-) {
-    return {
-        restrict: 'E',
+class NotifierDirective {
+    constructor (
+        notifierService
+    ) {
+        this.notifierService = notifierService;
 
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/Notifier.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        this.restrict = 'E';
+        this.template = template;
+    }
 
-        link: function ($scope) {
-            $scope.notifications = notifierService.notifications;
-            $scope.dismiss = notifierService.dismiss;
-        }
-    };
-};
+    link ($scope) {
+        $scope.notifications = this.notifierService.notifications;
+        $scope.dismiss = this.notifierService.dismiss;
+    }
+}
 
-Core.directive('tractorNotifier', NotifierDirective);
+export default angular.module('tractorNotifier', [
+    NotifierService.name
+])
+.directive('tractorNotifier', NotifierDirective);

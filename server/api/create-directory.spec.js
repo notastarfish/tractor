@@ -76,7 +76,7 @@ describe('server/api: create-directory:', () => {
                 path: directoryPath
             }
         };
-        let response = { };
+        let response = {};
 
         sinon.stub(fileStructure, 'createDirectory').returns(Promise.reject(error));
         sinon.stub(errorHandler, 'handler');
@@ -99,7 +99,7 @@ describe('server/api: create-directory:', () => {
                 path: directoryPath
             }
         };
-        let response = { };
+        let response = {};
 
         sinon.stub(fileStructure, 'createDirectory').returns(Promise.reject(error));
         sinon.stub(errorHandler, 'handler');

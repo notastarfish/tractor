@@ -1,31 +1,31 @@
 'use strict';
 
 // Utilities:
-var Promise = require('bluebird');
+import Promise from 'bluebird';
 
-// Module:
-var Core = require('../Core');
+// Dependencies:
+import angular from 'angular';
 
-Core.factory('httpResponseInterceptor', function (
-    notifierService
-) {
-    return {
-        response: handleResponseData,
-        responseError: handleResponseError
-    };
+class HttpResponseInterceptor {
+    constructor (
+        notifierService
+    ) {
+        this.notifierService = notifierService;
+    }
 
-    function handleResponseData (response) {
+    handleResponseData (response) {
         return Promise.resolve(response.config.url.match(/.html$/) ? response : response.data);
     }
 
-    function handleResponseError (response) {
-        var error = new Error();
-        notifierService.error(response.data.error);
+    handleResponseError (response) {
+        let error = new Error();
+        this.notifierService.error(response.data.error);
         error.message = response.data.error;
         error.response = response;
         return Promise.reject(error);
     }
-})
-.config(function ($httpProvider) {
-    $httpProvider.interceptors.push('httpResponseInterceptor');
-});
+}
+
+export default angular.module('httpResponseInterceptor', [])
+.factory('httpResponseInterceptor', HttpResponseInterceptor)
+.config($httpProvider => $httpProvider.interceptors.push('httpResponseInterceptor'));

@@ -1,19 +1,19 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-var path = require('path');
+// Constants:
+const ENTER_KEY_CODE = 13;
 
-// Module:
-var Core = require('../../Core');
+// Utilities:
+import changecase from 'change-case';
+import path from 'path';
 
 // Dependencies:
-var camel = require('change-case').camel;
-var title = require('change-case').title;
-require('../../Services/FileStructureService');
+import angular from 'angular';
+import FileStructureService from '../../Services/FileStructureService';
+import NotifierService from '../Notifier/NotifierService';
 
-var FileTreeController = (function () {
-    var FileTreeController = function FileTreeController (
+class FileTreeController {
+    constructor (
         $state,
         $interval,
         $window,
@@ -26,49 +26,48 @@ var FileTreeController = (function () {
         this.notifierService = notifierService;
         this.fileStructureService = fileStructureService;
 
-        this.headerName = title(this.type);
+        this.headerName = changecase.title(this.type);
         this.canModify = this.type !== 'step-definitions';
 
         this.editFilePath = this.editFilePath.bind(this);
-    };
+    }
 
-    FileTreeController.prototype.getName = function (item) {
+    getName (item) {
         if (item.ast) {
-            var metaComment = _.first(item.ast.comments);
-            var meta = JSON.parse(metaComment.value);
+            let [metaComment] = item.ast.comments;
+            let meta = JSON.parse(metaComment.value);
             return meta.name;
         }
         return item.name;
-    };
+    }
 
-    FileTreeController.prototype.addDirectory = function (directory) {
-        this.fileStructureService.addDirectory(this.type, {
-            path: directory.path
-        })
+    addDirectory (directory) {
+        let { path } = directory;
+        this.fileStructureService.addDirectory(this.type, { path })
         .then(setFileStructure.bind(this));
-    };
+    }
 
-    FileTreeController.prototype.editName = function (item) {
+    editName (item) {
         if (this.canModify || item.isDirectory) {
             item.editingName = true;
             item.previousName = item.name;
             this.hideOptions(item);
         }
-    };
+    }
 
-    FileTreeController.prototype.saveNewName = function (item) {
+    saveNewName (item) {
         item.editingName = false;
 
-        var valid = true;
-        if (_.contains(item.name, '_')) {
+        let valid = true;
+        if (item.name.includes('_')) {
             this.notifierService.error('Invalid character: "_"');
             valid = false;
         }
-        if (_.contains(item.name, '/')) {
+        if (item.name.includes('/')) {
             this.notifierService.error('Invalid character: "/"');
             valid = false;
         }
-        if (_.contains(item.name, '\\')) {
+        if (item.name.includes('\\')) {
             this.notifierService.error('Invalid character: "\\"');
             valid = false;
         }
@@ -81,84 +80,72 @@ var FileTreeController = (function () {
         }
 
         if (item.name !== item.previousName) {
-            var oldName = item.previousName;
-            var newName = item.name;
+            let directoryPath = getDirname(item.path);
+            let oldName = item.previousName;
+            let newName = item.name;
 
-            var oldDirectoryPath = getDirname(item.path);
+            let options = { directoryPath, oldName, newName }
 
-            var isDirectory = !!item.isDirectory;
+            let isDirectory = !!item.isDirectory;
             if (isDirectory) {
-                this.fileStructureService.editDirectoryPath(this.type, {
-                    directoryPath: oldDirectoryPath,
-                    oldName: oldName,
-                    newName: newName
-                })
+                this.fileStructureService.editDirectoryPath(this.type, options)
                 .then(setFileStructure.bind(this));
             } else {
-                this.fileStructureService.editFilePath(this.type, {
-                    directoryPath: oldDirectoryPath,
-                    oldName: oldName,
-                    newName: newName
-                })
+                this.fileStructureService.editFilePath(this.type, options)
                 .then(setFileStructure.bind(this));
             }
         }
-    };
+    }
 
-    FileTreeController.prototype.renameOnEnter = function ($event, item) {
-        if ($event.keyCode === 13) {
+    renameOnEnter ($event, item) {
+        if ($event.keyCode === ENTER_KEY_CODE) {
             this.saveNewName(item);
         }
-    };
+    }
 
-    FileTreeController.prototype.openFile = function (file) {
-        var directoryPath = this.model.fileStructure.directory.path.replace(/\\/g, '/');
-        var filePath = file.path.replace(/\\/g, '/');
-        var name = path.relative(directoryPath, filePath);
+    openFile (file) {
+        let directoryPath = this.model.fileStructure.directory.path.replace(/\\/g, '/');
+        let filePath = file.path.replace(/\\/g, '/');
+        let name = path.relative(directoryPath, filePath);
         name = name.substring(0, name.indexOf('.'));
-        var params = {
-            file: {
-                name: name
-            }
+        let params = {
+            file: { name }
         };
-        this.$state.go('tractor.' + this.type, params);
-    };
+        this.$state.go(`tractor.${this.type}`, params);
+    }
 
-    FileTreeController.prototype.editFilePath = function (file, directory) {
-        var oldDirectoryPath = getDirname(file.path);
-        if (oldDirectoryPath !== directory.path) {
-            this.fileStructureService.editFilePath(this.type, {
-                oldDirectoryPath: oldDirectoryPath,
-                newDirectoryPath: directory.path,
-                name: file.name
-            })
+    editFilePath (file, directory) {
+        let { name } = file
+        let oldDirectoryPath = getDirname(file.path);
+        let newDirectoryPath = directory.path;
+        if (oldDirectoryPath !== newDirectoryPath) {
+            let options = { oldDirectoryPath, newDirectoryPath, name };
+            this.fileStructureService.editFilePath(this.type, options)
             .then(setFileStructure.bind(this));
         }
-    };
+    }
 
-    FileTreeController.prototype.toggleOpenDirectory = function (item) {
+    toggleOpenDirectory (item) {
         item.open = !item.open;
         this.fileStructureService.toggleOpenDirectory(item.path);
-    };
+    }
 
-    FileTreeController.prototype.showOptions = function (item) {
+    showOptions (item) {
         item.showOptions = true;
-    };
+    }
 
-    FileTreeController.prototype.hideOptions = function (item) {
+    hideOptions (item) {
         item.showOptions = false;
-    };
+    }
 
-    FileTreeController.prototype.delete = function (item) {
+    delete (item) {
         this.hideOptions(item);
 
-        var hasChildren = item.files && item.files.length || item.directories && item.directories.length;
+        let hasChildren = item.files && item.files.length || item.directories && item.directories.length;
 
-        if (!hasChildren || this.$window.confirm('All directory contents will be deleted as well. Continue?')){
-            var deleteOptions = {
-                path: item.path,
-                name: item.name
-            };
+        if (!hasChildren || this.$window.confirm('All directory contents will be deleted as well. Continue?')) {
+            let { name, path } = item;
+            let deleteOptions = { path, name };
             if (item.isDirectory) {
                 this.fileStructureService.deleteDirectory(this.type, deleteOptions)
                 .then(setFileStructure.bind(this));
@@ -167,30 +154,31 @@ var FileTreeController = (function () {
                 .then(setFileStructure.bind(this));
             }
         }
-    };
+    }
 
-    FileTreeController.prototype.copy = function (item) {
-        this.fileStructureService.copyFile(this.type, {
-            path: item.path
-        })
+    copy (item) {
+        let { path } = item;
+        this.fileStructureService.copyFile(this.type, { path })
         .then(setFileStructure.bind(this));
-    };
-
-    function setFileStructure (fileStructure) {
-        this.model.fileStructure = fileStructure;
     }
+}
 
-    function getDirname (filePath) {
-        // Sw33t hax()rz to get around the browserify "path" shim not working on Windows.
-        var haxedFilePath = filePath.replace(/\\/g, '/');
-        var dirname = path.dirname(haxedFilePath);
-        if (haxedFilePath !== filePath) {
-            dirname = dirname.replace(/\//g, '\\');
-        }
-        return dirname;
+function setFileStructure (fileStructure) {
+    this.model.fileStructure = fileStructure;
+}
+
+function getDirname (filePath) {
+    // Sw33t hax()rz to get around the browserify "path" shim not working on Windows.
+    let haxedFilePath = filePath.replace(/\\/g, '/');
+    let dirname = path.dirname(haxedFilePath);
+    if (haxedFilePath !== filePath) {
+        dirname = dirname.replace(/\//g, '\\');
     }
+    return dirname;
+}
 
-    return FileTreeController;
-})();
-
-Core.controller('FileTreeController', FileTreeController);
+export default angular.module('fileTreeController', [
+    FileStructureService.name,
+    NotifierService.name
+])
+.controller('FileTreeController', FileTreeController);

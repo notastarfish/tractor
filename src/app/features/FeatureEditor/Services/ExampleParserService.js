@@ -1,28 +1,28 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-
-// Module:
-var FeatureEditor = require('../FeatureEditor');
-
 // Dependencies:
-require('../Models/ExampleModel');
+import angular from 'angular';
+import ExampleModel from '../Models/ExampleModel';
 
-var ExampleParserService = function ExampleParserService (ExampleModel) {
-    return {
-        parse: parse
-    };
+class ExampleParserService {
+    constructor (
+        ExampleModel
+    ) {
+        this.ExampleModel = ExampleModel;
+    }
 
-    function parse (scenario, tokens) {
-        var example = new ExampleModel(scenario);
+    parse (scenario, tokens) {
+        let example = new this.ExampleModel(scenario);
 
-        _.each(scenario.exampleVariables, function (variable, index) {
+        scenario.exampleVariables.forEach((variable, index) => {
             example.values[variable] = tokens[index].replace(/^"/, '').replace(/"$/, '');
         });
 
         return example;
     }
-};
+}
 
-FeatureEditor.service('ExampleParserService', ExampleParserService);
+export default angular.module('exampleParserService', [
+    ExampleModel.name
+])
+.service('ExampleParserService', ExampleParserService);

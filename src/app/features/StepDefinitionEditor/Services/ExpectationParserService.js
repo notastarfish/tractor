@@ -1,27 +1,23 @@
 'use strict';
 
-// Utilities:
-var _ = require('lodash');
-
-// Module:
-var StepDefinitionEditor = require('../StepDefinitionEditor');
-
 // Dependencies:
-require('../Models/ExpectationModel');
+import angular from 'angular';
+import ExpectationModel from '../Models/ExpectationModel';
 
-var ExpectationParserService = function ExpectationParserService (
-    ExpectationModel
-) {
-    return {
-        parse: parse
-    };
+class ExpectationParserService {
+    constructor (
+        ExpectationModel
+    ) {
+        this.ExpectationModel = ExpectationModel;
+    }
 
-    function parse (step, ast) {
+    parse (step, ast) {
         try {
-            var expectation = new ExpectationModel(step);
-            expectation.value = _.first(ast.arguments).value;
+            let expectation = new this.ExpectationModel(step);
+            let [firstArgument] = ast.arguments;
+            expectation.value = firstArgument.value;
 
-            var expectationCallExpression = _.first(ast.callee.object.object.object.arguments);
+            let [expectationCallExpression] = ast.callee.object.object.object.arguments;
 
             expectation.component = parseComponent(expectation, expectationCallExpression);
             expectation.action = parseAction(expectation, expectationCallExpression);
@@ -34,24 +30,27 @@ var ExpectationParserService = function ExpectationParserService (
             return null;
         }
     }
+}
 
-    function parseComponent (expectation, expectationCallExpression) {
-        return _.find(expectation.step.stepDefinition.componentInstances, function (componentInstance) {
-            return expectationCallExpression.callee.object.name === componentInstance.variableName;
-        });
-    }
+function parseComponent (expectation, expectationCallExpression) {
+    return expectation.step.stepDefinition.componentInstances.find(componentInstance => {
+        return expectationCallExpression.callee.object.name === componentInstance.variableName;
+    });
+}
 
-    function parseAction (expectation, expectationCallExpression) {
-        return _.find(expectation.component.component.actions, function (action) {
-            return expectationCallExpression.callee.property.name === action.variableName;
-        });
-    }
+function parseAction (expectation, expectationCallExpression) {
+    return expectation.component.component.actions.find(action => {
+        return expectationCallExpression.callee.property.name === action.variableName;
+    });
+}
 
-    function parseArguments (expectation, expectationCallExpression) {
-        _.each(expectationCallExpression.arguments, function (argument, index) {
-            expectation.arguments[index].value = argument.value;
-        });
-    }
-};
+function parseArguments (expectation, expectationCallExpression) {
+    expectationCallExpression.arguments.forEach((argument, index) => {
+        expectation.arguments[index].value = argument.value;
+    });
+}
 
-StepDefinitionEditor.service('ExpectationParserService', ExpectationParserService);
+export default angular.module('expectationParserService', [
+    ExpectationModel.name
+])
+.service('ExpectationParserService', ExpectationParserService);

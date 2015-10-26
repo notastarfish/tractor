@@ -1,43 +1,37 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var fs = require('fs');
-
-// Module:
-var Core = require('../../Core');
+import changecase from 'change-case';
+import isUndefined from 'lodash.isundefined';
 
 // Dependencies:
-var camelcase = require('change-case').camel;
-require('../../Validators/VariableNameValidator');
+import angular from 'angular';
+import template from './VariableInput.html'
+import VariableNameValidator from '../../Validators/VariableNameValidator';
 
-var VariableInputDirective = function () {
-    return {
-        restrict: 'E',
+class VariableInputDirective {
+    constructor () {
+        this.restrict = 'E';
 
-        scope: {
+        this.scope = {
             model: '=',
             label: '@',
             example: '@'
-        },
+        };
 
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/VariableInput.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        this.template = template;
+    }
 
-        link: link
-    };
-
-    function link ($scope, $element, $attrs) {
-        if (_.isUndefined($scope.model)) {
+    link ($scope, $element, $attrs) {
+        if (isUndefined($scope.model)) {
             throw new Error('The "tractor-variable-input" directive requires a "model" attribute.');
         }
 
-        if (_.isUndefined($scope.label)) {
+        if (isUndefined($scope.label)) {
             throw new Error('The "tractor-variable-input" directive requires a "label" attribute.');
         }
 
-        if (_.isUndefined($attrs.form)) {
+        if (isUndefined($attrs.form)) {
             throw new Error('The "tractor-variable-input" directive requires a "form" attribute.');
         }
 
@@ -45,8 +39,11 @@ var VariableInputDirective = function () {
         $scope.id = Math.floor(Math.random() * Date.now());
 
         $scope.isClass = Object.prototype.hasOwnProperty.call($attrs, 'isClass');
-        $scope.property = camelcase($scope.label);
+        $scope.property = changecase.camel($scope.label);
     }
-};
+}
 
-Core.directive('tractorVariableInput', VariableInputDirective);
+export default angular.module('tractorVariableInput', [
+    VariableNameValidator.name
+])
+.directive('tractorVariableInput', VariableInputDirective);

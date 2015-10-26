@@ -1,43 +1,41 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-var fs = require('fs');
-
-// Module:
-var Core = require('../../Core');
+import isUndefined from 'lodash.isundefined';
 
 // Dependencies:
-require('./FileTreeController');
+import angular from 'angular';
+import FileTreeController from './FileTreeController';
+import template from './FileTree.html';
 
-var FileTreeDirective = function () {
-    return {
-        restrict: 'E',
+class FileTreeDirective {
+    constructor () {
+        this.restrict = 'E';
 
-        scope: {
+        this.scope = {
             model: '=',
             type: '@'
-        },
+        };
 
-        /* eslint-disable no-path-concat */
-        template: fs.readFileSync(__dirname + '/FileTree.html', 'utf8'),
-        /* eslint-enable no-path-concat */
+        this.template = template;
 
-        controller: 'FileTreeController',
-        controllerAs: 'fileTree',
-        bindToController: true,
-        link: link
-    };
+        this.controller = 'FileTreeController';
+        this.controllerAs = 'fileTree';
+        this.bindToController = true;
+    }
 
-    function link ($scope) {
-        if (_.isUndefined($scope.fileTree.model)) {
+    link ($scope) {
+        if (isUndefined($scope.fileTree.model)) {
             throw new Error('The "tractor-file-tree" directive requires a "model" attribute.');
         }
 
-        if (_.isUndefined($scope.fileTree.type)) {
+        if (isUndefined($scope.fileTree.type)) {
             throw new Error('The "tractor-file-tree" directive requires a "type" attribute.');
         }
     }
-};
+}
 
-Core.directive('tractorFileTree', FileTreeDirective);
+export default angular.module('tractorFileTree', [
+    FileTreeController.name
+])
+.directive('tractorFileTree', FileTreeDirective);

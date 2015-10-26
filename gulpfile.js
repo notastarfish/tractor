@@ -4,7 +4,6 @@ var babel = require('babel/register');
 
 var gulp = require('gulp');
 
-var bundle = require('./build/bundle');
 var fonts = require('./build/fonts');
 var images = require('./build/images');
 var lint = require('./build/lint');
@@ -25,8 +24,7 @@ gulp.task('styles', styles);
 gulp.task('lint-server', lint.server);
 gulp.task('test-server', ['lint-server'], test.server);
 
-gulp.task('bundle', bundle);
-gulp.task('lint-client', ['bundle'], lint.client);
+gulp.task('lint-client', lint.client);
 gulp.task('test-client', ['lint-client'], test.client);
 
 gulp.task('reload', reload);

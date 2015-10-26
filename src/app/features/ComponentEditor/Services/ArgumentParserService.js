@@ -1,22 +1,25 @@
 'use strict';
 
-// Module:
-var ComponentEditor = require('../ComponentEditor');
-
 // Dependencies:
-require('../Models/ArgumentModel');
+import angular from 'angular';
+import ArgumentModel from '../Models/ArgumentModel';
 
-var ArgumentParserService = function ArgumentParserService (ArgumentModel) {
-    return {
-        parse: parse
-    };
+class ArgumentParserService {
+    constructor (
+        ArgumentModel
+    ) {
+        this.ArgumentModel = ArgumentModel
+    }
 
-    function parse (method, argument, astObject) {
-        argument = new ArgumentModel(method, argument);
+    parse (method, argument, astObject) {
+        argument = new this.ArgumentModel(method, argument);
         argument.value = astObject.name || astObject.value;
 
         return argument;
     }
-};
+}
 
-ComponentEditor.service('ArgumentParserService', ArgumentParserService);
+export default angular.module('argumentParserService', [
+    ArgumentModel.name
+])
+.service('argumentParserService', ArgumentParserService);

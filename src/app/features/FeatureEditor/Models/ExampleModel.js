@@ -1,60 +1,53 @@
 'use strict';
 
 // Utilities:
-var _ = require('lodash');
-
-// Module:
-var FeatureEditor = require('../FeatureEditor');
+import isUndefined from 'lodash.isundefined';
 
 // Dependencies:
-require('../../../Core/Services/StringToLiteralService');
+import angular from 'angular';
+import StringToLiteralService from '../../../Core/Services/StringToLiteralService';
 
-var createExampleModelConstructor = function (
+function createExampleModelConstructor (
     stringToLiteralService,
     FeatureIndent
 ) {
-    var ExampleModel = function ExampleModel (scenario) {
-        var values = {};
+    const scenario = Symbol();
 
-        Object.defineProperties(this, {
-            scenario: {
-                get: function () {
-                    return scenario;
-                }
-            },
-            values: {
-                get: function () {
-                    _.each(this.scenario.exampleVariables, function (exampleVariable) {
-                        values[exampleVariable] = values[exampleVariable] || {
-                            value: ''
-                        };
-                    });
-                    return values;
-                }
-            },
-            feature: {
-                get: function () {
-                    return toFeature.call(this);
-                }
-            }
-        });
-    };
+    return class ExampleModel {
+        constructor (_scenario) {
+            this[scenario] = _scenario;
+        }
 
-    return ExampleModel;
+        get scenario () {
+            return this[scenario];
+        }
+
+        get values () {
+            let values = {};
+            this.scenario.exampleVariables.forEach(exampleVariable => {
+                values[exampleVariable] = values[exampleVariable] || {
+                    value: ''
+                };
+            });
+            return values;
+        }
+
+        get feature () {
+            return toFeature.call(this);
+        }
+    }
 
     function toFeature () {
-        var values = '| ' + _.map(this.scenario.exampleVariables, function (variable) {
-           var value = this.values[variable].value;
-           var literal = stringToLiteralService.toLiteral(value);
-           return !_.isUndefined(literal) ? literal : '"' + value + '"';
-        }, this).join(' | ') + ' |';
-        return FeatureIndent + FeatureIndent + FeatureIndent + values;
+        let values = this.scenario.exampleVariables.map(variable => {
+            let value = this.values[variable].value;
+            let literal = stringToLiteralService.toLiteral(value);
+            return isUndefined(literal) ? `"${value}"` : literal;
+        }).join(' | ');
+        return `${FeatureIndent}${FeatureIndent}${FeatureIndent}| ${values} |`;
     }
-};
+}
 
-FeatureEditor.factory('ExampleModel', function (
-    stringToLiteralService,
-    FeatureIndent
-) {
-    return createExampleModelConstructor(stringToLiteralService, FeatureIndent);
-});
+export default angular.module('exampleModel', [
+    StringToLiteralService.name
+])
+.factory('ExampleModel', createExampleModelConstructor);

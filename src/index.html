@@ -6,12 +6,15 @@
     <title>tractor</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/style.css">
 	<link rel="icon" href="/images/favicon.png">
     <base href="/">
   </head>
   <body class="fill">
     <div ui-view class="fill"></div>
-    <script src="/tractor.bundle.js"></script>
+    <script src="jspm_packages/system.js"></script>
+    <script src="jspm.config.js"></script>
+    <script>
+        System.import('app/app.js');
+    </script>
   </body>
 </html>
