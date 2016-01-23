@@ -18,37 +18,60 @@ class FeatureParserService {
     }
 
     parse (featureFile) {
+        let { tokens } = featureFile;
         try {
             let feature = new this.FeatureModel({
                 isSaved: true,
                 path: featureFile.path
             });
 
-            let [featureTokens] = featureFile.tokens;
-            feature.name = featureTokens.name;
-            feature.inOrderTo = featureTokens.inOrderTo;
-            feature.asA = featureTokens.asA;
-            feature.iWant = featureTokens.iWant;
+            let [featureTokens] = tokens;
 
-            featureTokens.elements.forEach((element, index) => {
-                try {
-                    let parsedScenario = this.scenarioParserService.parse(feature, element);
-                    assert(parsedScenario);
-                    feature.scenarios.push(parsedScenario);
-                    return;
-                } catch (e) {}
+            parseFeature(feature, featureTokens);
 
-                console.warn('Invalid Feature:', element, index);
-            });
+            let parsers = [parseScenarios];
+            tryParse.call(this, feature, featureTokens, parsers);
 
             return feature;
         } catch (e) {
-            return new this.FeatureModel();
+            console.warn('Invalid feature:', tokens);
+            return null;
         }
     }
 }
 
-export default angular.module('featureParserService', [
+function parseFeature (feature, tokens) {
+    feature.name = tokens.name;
+    assert(feature.name);
+    feature.inOrderTo = tokens.inOrderTo;
+    assert(feature.inOrderTo);
+    feature.asA = tokens.asA;
+    assert(feature.asA);
+    feature.iWant = tokens.iWant;
+    assert(feature.iWant);
+}
+
+function tryParse (feature, tokens, parsers) {
+    let parsed = parsers.some(parser => {
+        try {
+            return parser.call(this, feature, tokens);
+        } catch (e) { }
+    });
+    if (!parsed) {
+        throw new Error();
+    }
+}
+
+function parseScenarios (feature, tokens) {
+    tokens.elements.forEach((element) => {
+        let parsedScenario = this.scenarioParserService.parse(element);
+        assert(parsedScenario);
+        feature.scenarios.push(parsedScenario);
+    });
+    return true;
+}
+
+export default angular.module('tractor.featureParserService', [
     FeatureModel.name,
     ScenarioParserService.name
 ])

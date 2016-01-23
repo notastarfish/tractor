@@ -5,8 +5,8 @@ const OPEN_DIRECTORIES = 'OpenDirectories';
 
 // Dependencies:
 import angular from 'angular';
-import ComponentParserService from '../../Features/ComponentEditor/Services/ComponentParserService';
-import MockDataParserService from '../../Features/MockDataEditor/Services/MockDataParserService';
+import ComponentParserService from '../../features/ComponentEditor/Services/ComponentParserService';
+import MockDataParserService from '../../features/MockDataEditor/Services/MockDataParserService';
 import PersistentStateService from './PersistentStateService';
 
 class FileStructureService {
@@ -24,7 +24,7 @@ class FileStructureService {
 
     getFileStructure (type) {
         return this.$http.get(`/${type}/file-structure`)
-        .then(parseComponentsAndMockData)
+        .then(parseComponentsAndMockData.bind(this))
         .then(updateFileStructure.bind(this));
     }
 
@@ -71,18 +71,21 @@ class FileStructureService {
 }
 
 function parseComponentsAndMockData (fileStructure) {
-    fileStructure.availableComponents = fileStructure.availableComponents.map(component => {
-        return this.componentParserService.parse(component);
-    });
-    fileStructure.availableMockData = fileStructure.availableMockData.map(mockData => {
-        return this.mockDataParserService.parse(mockData);
-    });
+    let { availableComponents, availableMockData } = fileStructure;
+    if (availableComponents && availableMockData) {
+        fileStructure.availableComponents = availableComponents.map(component => {
+            return this.componentParserService.parse(component);
+        });
+        fileStructure.availableMockData = availableMockData.map(mockData => {
+            return this.mockDataParserService.parse(mockData);
+        });
+    }
     return fileStructure;
 }
 
 function updateFileStructure (fileStructure) {
     fileStructure.directory = restoreOpenDirectories.call(this, fileStructure.directory);
-    fileStructure.directory.allFiles = getAllFiles(fileStructure.directory);
+    fileStructure.directory.allFiles = getAllFiles.call(this, fileStructure.directory);
     fileStructure.directory.open = true;
     return fileStructure;
 }
@@ -93,7 +96,7 @@ function getOpenDirectories () {
 
 function restoreOpenDirectories (directory) {
     directory.directories.forEach(directory => {
-        restoreOpenDirectories(directory);
+        restoreOpenDirectories.call(this, directory);
     });
     directory.open = !!getOpenDirectories.call(this)[directory.path];
     return directory;
@@ -101,13 +104,13 @@ function restoreOpenDirectories (directory) {
 
 function getAllFiles (directory, allFiles = []) {
     directory.directories.forEach(directory => {
-        allFiles = getAllFiles(directory, allFiles);
+        allFiles = getAllFiles.call(this, directory, allFiles);
     });
     allFiles = allFiles.concat(directory.files);
     return allFiles;
 }
 
-export default angular.module('fileStructureService', [
+export default angular.module('tractor.fileStructureService', [
     ComponentParserService.name,
     MockDataParserService.name,
     PersistentStateService.name

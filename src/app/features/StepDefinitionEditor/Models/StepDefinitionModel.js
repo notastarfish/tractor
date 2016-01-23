@@ -13,27 +13,49 @@ function createStepDefinitionModelConstructor (
     mockDataFileService,
     MockDataInstanceModel
 ) {
+    const components = Symbol();
+    const componentInstances = Symbol();
+    const mockData = Symbol();
+    const mockDataInstances = Symbol();
+    const options = Symbol();
+
     return class StepDefinitionModel {
-        constructor (options = {}) {
-            this.options = options;
+        constructor (_options = {}) {
+            this[options] = _options;
 
-            this.components = [];
-            this.componentInstances = [];
+            this[components] = [];
+            this[componentInstances] = [];
 
-            this.mockData = [];
-            this.mockDataInstances = [];
+            this[mockData] = [];
+            this[mockDataInstances] = [];
         }
 
         get availableComponents () {
-            return this.options.availableComponents;
+            return this[options].availableComponents || [];
         }
 
         get availableMockData () {
-            return this.options.availableMockData;
+            return this[options].availableMockData || [];
         }
 
         get path () {
-            return this.options.path;
+            return this[options].path;
+        }
+
+        get components () {
+            return this[components];
+        }
+
+        get componentInstances () {
+            return this[componentInstances];
+        }
+
+        get mockData () {
+            return this[mockData];
+        }
+
+        get mockDataInstances () {
+            return this[mockDataInstances];
         }
 
         get meta () {
@@ -100,7 +122,7 @@ function createStepDefinitionModelConstructor (
     }
 }
 
-export default angular.module('stepDefinitionModel', [
+export default angular.module('tractor.stepDefinitionModel', [
     ASTCreatorService.name,
     ComponentInstanceModel.name,
     MockDataInstanceModel.name

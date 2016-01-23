@@ -1,39 +1,44 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
-// Test Utilities:
-var chai = require('chai');
+// Utilities:
+import chai from 'chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
+
+// Dependencies:
+import escodegen from 'escodegen';
 
 // Testing:
-require('./ParameterModel');
-var ParameterModel;
+import './ParameterModel';
+let ParameterModel;
 
-describe('ParameterModel.js:', function () {
-    beforeEach(function () {
-        angular.mock.module('ComponentEditor');
+describe('ParameterModel.js:', () => {
+    beforeEach(() => {
+        angular.mock.module('tractor.parameterModel');
 
-        angular.mock.inject(function (_ParameterModel_) {
+        angular.mock.inject((
+            _ParameterModel_
+        ) => {
             ParameterModel = _ParameterModel_;
         });
     });
 
-    describe('ParameterModel constructor:', function () {
-        it('should create a new `ParameterModel`:', function () {
-            var parameterModel = new ParameterModel();
+    describe('ParameterModel constructor:', () => {
+        it('should create a new `ParameterModel`:', () => {
+            let parameterModel = new ParameterModel();
             expect(parameterModel).to.be.an.instanceof(ParameterModel);
         });
 
-        it('should have default properties:', function () {
-            var action = {};
+        it('should have default properties:', () => {
+            let action = {};
 
-            var parameterModel = new ParameterModel(action);
+            let parameterModel = new ParameterModel(action);
 
             expect(parameterModel.action).to.equal(action);
             expect(parameterModel.name).to.equal('');
@@ -43,46 +48,44 @@ describe('ParameterModel.js:', function () {
         });
     });
 
-    describe('ParameterModel.variableName:', function () {
-        it('should turn the full name of the Parameter into a JS variable:', function () {
-            var parameterModel = new ParameterModel();
+    describe('ParameterModel.variableName:', () => {
+        it('should turn the full name of the Parameter into a JS variable:', () => {
+            let parameterModel = new ParameterModel();
 
             parameterModel.name = 'A long name that describes the parameter.';
             expect(parameterModel.variableName).to.equal('aLongNameThatDescribesTheParameter');
         });
     });
 
-    describe('ParameterModel.meta:', function () {
-        it('should contain the full name of the Parameter:', function () {
-            var parameterModel = new ParameterModel();
+    describe('ParameterModel.meta:', () => {
+        it('should contain the full name of the Parameter:', () => {
+            let parameterModel = new ParameterModel();
 
             parameterModel.name = 'A long name that describes the parameter.';
             expect(parameterModel.meta.name).to.equal('A long name that describes the parameter.');
         });
     });
 
-    describe('ParameterModel.ast:', function () {
-        it('should be the AST of the Parameter:', function () {
-            var escodegen = require('escodegen');
-
-            var parameterModel = new ParameterModel();
+    describe('ParameterModel.ast:', () => {
+        it('should be the AST of the Parameter:', () => {
+            let parameterModel = new ParameterModel();
             parameterModel.name = 'Parameter';
-            var ast = parameterModel.ast;
+            let ast = parameterModel.ast;
 
             expect(escodegen.generate(ast)).to.equal('parameter');
         });
     });
 
-    describe('ParameterModel.getAllVariableNames:', function () {
-        it('should return the names of all the other Parameters assosciated with an Action:', function () {
-            var action = {
+    describe('ParameterModel.getAllVariableNames:', () => {
+        it('should return the names of all the other Parameters assosciated with an Action:', () => {
+            let action = {
                 parameters: [{
                     name: 'parameter1'
                 }, {
                     name: 'parameter2'
                 }]
             };
-            var parameterModel = new ParameterModel(action);
+            let parameterModel = new ParameterModel(action);
             expect(parameterModel.getAllVariableNames()).to.deep.equal(['parameter1', 'parameter2']);
         });
     });

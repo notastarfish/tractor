@@ -1,7 +1,7 @@
 'use strict';
 
 // Constants:
-import constants from './contants';
+import constants from './constants';
 import { config } from './config';
 
 // Utilities:
@@ -36,7 +36,7 @@ function init () {
     /* eslint-enable new-cap */
     let sockets = io(server);
 
-    application.use(express.static(path.resolve(__dirname, '../src')));
+    application.use(express.static(path.resolve(__dirname, '../www')));
 
     application.use(bodyParser.json());
     application.use(bodyParser.urlencoded({
@@ -65,7 +65,7 @@ function init () {
         if (ext) {
             response.status(constants.FILE_NOT_FOUND_ERROR).end();
         } else {
-            response.sendFile(path.join(__dirname, '../src', 'index.html'));
+            response.sendFile(path.join(__dirname, '../www', 'index.html'));
         }
     });
 

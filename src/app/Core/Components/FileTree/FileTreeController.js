@@ -168,7 +168,7 @@ function setFileStructure (fileStructure) {
 }
 
 function getDirname (filePath) {
-    // Sw33t hax()rz to get around the browserify "path" shim not working on Windows.
+    // Sw33t hax()rz to get around the node "path" shim not working on Windows.
     let haxedFilePath = filePath.replace(/\\/g, '/');
     let dirname = path.dirname(haxedFilePath);
     if (haxedFilePath !== filePath) {

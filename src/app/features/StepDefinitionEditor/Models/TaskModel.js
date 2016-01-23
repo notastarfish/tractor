@@ -19,9 +19,7 @@ function createTaskModelConstructor (
             this[step] = _step;
 
             let [firstComponent] = this.step.stepDefinition.componentInstances;
-            this[component] = firstComponent;
-            let [firstAction] = this.component.component.actions;
-            this[action] = firstAction;
+            this.component = firstComponent;
         }
 
         get step () {
@@ -34,7 +32,7 @@ function createTaskModelConstructor (
         set component (newComponent) {
             this[component] = newComponent;
             let [firstAction] = this.component.component.actions;
-            this[action] = firstAction;
+            this.action = firstAction;
         }
 
         get action () {
@@ -74,7 +72,7 @@ function createTaskModelConstructor (
     }
 }
 
-export default angular.module('taskModel', [
+export default angular.module('tractor.taskModel', [
     ArgumentModel.name,
     ASTCreatorService.name
 ])

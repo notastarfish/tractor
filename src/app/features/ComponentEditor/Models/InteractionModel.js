@@ -5,15 +5,16 @@ import angular from 'angular';
 import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
 import MethodModel from './MethodModel';
 
+// Symbols:
+const action = Symbol();
+const element = Symbol();
+const method = Symbol();
+const methodInstance = Symbol();
+
 function createInteractionModelConstructor (
     astCreatorService,
     MethodModel
 ) {
-    const action = Symbol();
-    const element = Symbol();
-    const method = Symbol();
-    const methodInstance = Symbol();
-
     return class InteractionModel {
         constructor (_action) {
             this[action] = _action;
@@ -80,7 +81,7 @@ function createInteractionModelConstructor (
     }
 }
 
-export default angular.module('interactionModel', [
+export default angular.module('tractor.interactionModel', [
     ASTCreatorService.name,
     MethodModel.name
 ])

@@ -1,111 +1,119 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
-// Test Utilities:
-var chai = require('chai');
-var dirtyChai = require('dirty-chai');
+// Utilities:
+import chai from 'chai';
+import dirtyChai from 'dirty-chai';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 chai.use(dirtyChai);
-
-// Mocks:
-var MockHttpResponseInterceptor = require('../../Services/HttpResponseInterceptor.mock');
+chai.use(sinonChai);
 
 // Testing:
-require('./StepInputDirective');
+import './StepInputDirective';
 
-describe('StepInputDirective.js:', function() {
-    var $compile;
-    var $rootScope;
+describe('StepInputDirective.js:', () => {
+    let $compile;
+    let $rootScope;
+    let ScenarioModel;
 
-    beforeEach(function () {
+    beforeEach(() => {
         angular.module('StepDefinitionEditor', []);
-        angular.mock.module('Core');
+        angular.mock.module('tractor.stepInput');
 
-        angular.mock.module(function ($provide) {
-            $provide.factory('StepDeclarationModel', function () {
-                return {};
-            });
-            $provide.factory('HttpResponseInterceptor', function () {
-                return new MockHttpResponseInterceptor();
-            });
+        ScenarioModel = {};
+        angular.mock.module(($provide) => {
+            $provide.factory('ScenarioModel', () => ScenarioModel);
         });
 
-        angular.mock.inject(function (_$compile_, _$rootScope_) {
+        angular.mock.inject((_$compile_, _$rootScope_) => {
             $compile = _$compile_;
             $rootScope = _$rootScope_;
         });
     });
 
-    var compileDirective = function (template, scope) {
-        var directive = $compile(template)(scope);
+    const compileDirective = (template, scope) => {
+        let directive = $compile(template)(scope);
         scope.$digest();
         return directive;
     };
 
-    describe('Link function:', function () {
-        it('should throw an error when `model` is not passed in:', function () {
-            expect(function () {
-                var scope = $rootScope.$new();
+    describe('Link function:', () => {
+        it('should throw an error when "model" is not passed in:', () => {
+            let scope = $rootScope.$new();
+
+            expect(() => {
                 compileDirective('<tractor-step-input></tractor-step-input>', scope);
-            }).to.throw('The "tractor-step-input" directive requires a "model" attribute.');
+            }).to.throw('The <tractor-step-input> directive requires a "model" attribute.');
         });
 
-        it('should throw an error when `label` is not passed in:', function () {
-            expect(function () {
-                var scope = $rootScope.$new();
-                scope.model = {};
+        it('should throw an error when "label" is not passed in:', () => {
+            let scope = $rootScope.$new();
+            scope.model = {};
+
+            expect(() => {
                 compileDirective('<tractor-step-input model="model"></tractor-step-input>', scope);
-            }).to.throw('The "tractor-step-input" directive requires a "label" attribute.');
+            }).to.throw('The <tractor-step-input> directive requires a "label" attribute.');
         });
 
-        it('should throw an error when `form` is not passed in:', function () {
-            expect(function () {
-                var scope = $rootScope.$new();
-                scope.model = {};
+        it('should throw an error when "form" is not passed in:', () => {
+            let scope = $rootScope.$new();
+            scope.model = {};
+
+            expect(() => {
                 compileDirective('<tractor-step-input model="model" label="Some label"></tractor-step-input>', scope);
-            }).to.throw('The "tractor-step-input" directive requires a "form" attribute.');
+            }).to.throw('The <tractor-step-input> directive requires a "form" attribute.');
         });
 
-        it('should successfully compile the directive otherwise:', function () {
-            expect(function () {
-                var scope = $rootScope.$new();
-                scope.model = {};
-                compileDirective('<tractor-step-input model="model" label="Some label" form="parent"></tractor-step-input>', scope);
+        it('should successfully compile the directive:', () => {
+            ScenarioModel.getExampleVariableNames = angular.noop;
+            sinon.stub(ScenarioModel, 'getExampleVariableNames').returns([]);
+
+            let scope = $rootScope.$new();
+            scope.model = {};
+            scope.form = {};
+
+            expect(() => {
+                compileDirective('<tractor-step-input model="model" label="Some label" form="form"></tractor-step-input>', scope);
             }).not.to.throw();
         });
 
-        it('should get the correct form off the parent scope:', function () {
-            var scope = $rootScope.$new();
-            var parentForm = {};
-            scope.$parent.parent = parentForm;
-            scope.model = {};
-            var directive = compileDirective('<tractor-step-input model="model" label="Some label" form="parent"></tractor-step-input>', scope);
-            expect(directive.isolateScope().form).to.equal(parentForm);
-        });
+        it('should generate a unique `id` for the input:', () => {
+            ScenarioModel.getExampleVariableNames = angular.noop;
+            sinon.stub(ScenarioModel, 'getExampleVariableNames').returns([]);
 
-        it('should generate a unique id for the input:', function () {
-            var scopeOne = $rootScope.$new();
-            var scopeTwo = $rootScope.$new();
+            let scopeOne = $rootScope.$new();
+            let scopeTwo = $rootScope.$new();
             scopeOne.model = scopeTwo.model = {};
-            var directiveOne = compileDirective('<tractor-step-input model="model" label="Some label" form="parent"></tractor-step-input>', scopeOne);
-            var directiveTwo = compileDirective('<tractor-step-input model="model" label="Some label" form="parent"></tractor-step-input>', scopeTwo);
-            var idOne = directiveOne.isolateScope().id;
-            var idTwo = directiveTwo.isolateScope().id;
+            scopeOne.form = scopeTwo.form = {};
+
+            let directiveOne = compileDirective('<tractor-step-input model="model" label="Some label" form="form"></tractor-step-input>', scopeOne);
+            let directiveTwo = compileDirective('<tractor-step-input model="model" label="Some label" form="form"></tractor-step-input>', scopeTwo);
+
+            let idOne = directiveOne.isolateScope().id;
+            let idTwo = directiveTwo.isolateScope().id;
             expect(idOne).not.to.be.undefined();
             expect(idTwo).not.to.be.undefined();
             expect(idOne).not.to.equal(idTwo);
         });
 
-        it('should convert the "label" attribute into a camel-cased "property":', function () {
-            var scope = $rootScope.$new();
+        it('should convert the "label" attribute into a camel-cased `property`:', () => {
+            ScenarioModel.getExampleVariableNames = angular.noop;
+            sinon.stub(ScenarioModel, 'getExampleVariableNames').returns([]);
+
+            let scope = $rootScope.$new();
             scope.model = {};
-            var directive = compileDirective('<tractor-step-input model="model" label="Some label" form="parent"></tractor-step>', scope);
+            scope.form = {};
+
+            let directive = compileDirective('<tractor-step-input model="model" label="Some label" form="form"></tractor-step>', scope);
+
             expect(directive.isolateScope().property).to.equal('someLabel');
         });
     });

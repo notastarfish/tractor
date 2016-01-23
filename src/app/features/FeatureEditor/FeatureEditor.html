@@ -8,7 +8,7 @@
             <div>
                 <tractor-text-input class="file-options__name-input"
                     ng-if="!featureEditor.fileModel.isSaved"
-                    form="file-editor"
+                    form="featureEditor.fileEditor"
                     label="Name"
                     model="featureEditor.fileModel"
                     example="Feature"
@@ -35,19 +35,19 @@
                     <h2>Feature:</h2>
 
                     <tractor-text-input
-                        form="file-editor"
+                        form="featureEditor.fileEditor"
                         label="In order to"
                         model="featureEditor.fileModel"
                         example="achieve some goal">
                     </tractor-text-input>
                     <tractor-text-input
-                        form="file-editor"
+                        form="featureEditor.fileEditor"
                         label="As a"
                         model="featureEditor.fileModel"
                         example="certain type of user">
                     </tractor-text-input>
                     <tractor-text-input
-                        form="file-editor"
+                        form="featureEditor.fileEditor"
                         label="I want"
                         model="featureEditor.fileModel"
                         example="to be able to do something">
@@ -72,7 +72,7 @@
                                 icon="remove"></tractor-action>
 
                             <tractor-text-input
-                                form="file-editor"
+                                form="featureEditor.fileEditor"
                                 label="Name"
                                 model="scenario"
                                 example="Scenario">
@@ -93,7 +93,7 @@
 
                                         <tractor-select label="Type" model="stepDeclaration"></tractor-select>
                                         <tractor-step-input
-                                            form="file-editor"
+                                            form="featureEditor.fileEditor"
                                             label="Step"
                                             model="stepDeclaration"
                                             example="something happens">
@@ -119,7 +119,7 @@
                                         </tractor-action>
 
                                         <tractor-literal-input ng-repeat="exampleVariable in scenario.exampleVariables"
-                                            form="file-editor"
+                                            form="featureEditor.fileEditor"
                                             name="exampleVariable"
                                             model="example.values[exampleVariable]"
                                             type="argument.type">

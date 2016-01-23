@@ -2,7 +2,6 @@
 
 // Utilities:
 import changecase from 'change-case';
-import isUndefined from 'lodash.isundefined';
 
 // Dependencies:
 import angular from 'angular';
@@ -20,27 +19,27 @@ class SelectInputDirective {
         };
 
         this.template = template;
-    }
 
-    link ($scope) {
-        if (isUndefined($scope.model)) {
-            throw new Error('The "tractor-select" directive requires a "model" attribute.');
-        }
+        this.link = $scope => {
+            if (angular.isUndefined($scope.model)) {
+                throw new Error('The <tractor-select> directive requires a "model" attribute.');
+            }
 
-        if (isUndefined($scope.label)) {
-            throw new Error('The "tractor-select" directive requires a "label" attribute.');
-        }
+            if (angular.isUndefined($scope.label)) {
+                throw new Error('The <tractor-select> directive requires a "label" attribute.');
+            }
 
-        $scope.property = changecase.camel($scope.label);
-        $scope.selectOptions = getOptionsFromProperty($scope);
+            $scope.property = changecase.camel($scope.label);
+            $scope.selectOptions = getOptionsFromProperty($scope);
 
-        if (isUndefined($scope.selectOptions) && isUndefined($scope.options)) {
-            throw new Error('The "tractor-select" directive requires an "options" attribute, or a "label" attribute that matches a set of options on the "model".');
-        }
+            if (angular.isUndefined($scope.selectOptions) && angular.isUndefined($scope.options)) {
+                throw new Error('The <tractor-select> directive requires an "options" attribute, or a "label" attribute that matches a set of options on the "model".');
+            }
 
-        $scope.$watchCollection('options', () => {
-            $scope.selectOptions = $scope.options || getOptionsFromProperty($scope);
-        });
+            $scope.$watchCollection('options', () => {
+                $scope.selectOptions = $scope.options || getOptionsFromProperty($scope);
+            });
+        };
     }
 }
 
@@ -48,5 +47,5 @@ function getOptionsFromProperty ($scope) {
     return $scope.model[`${$scope.property}s`];
 }
 
-export default angular.module('tractorSelect', [])
-.directive('tractorSelect', SelectInputDirective);
+export default angular.module('tractor.select', [])
+.directive('tractorSelect', () => new SelectInputDirective());

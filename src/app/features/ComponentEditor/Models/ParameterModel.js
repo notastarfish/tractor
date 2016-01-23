@@ -7,11 +7,12 @@ import changecase from 'change-case';
 import angular from 'angular';
 import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
 
+// Symbols:
+const action = Symbol();
+
 function createParameterModelConstructor (
     astCreatorService
 ) {
-    const action = Symbol();
-
     return class ParameterModel {
         constructor (_action) {
             this[action] = _action;
@@ -50,7 +51,7 @@ function createParameterModelConstructor (
     }
 }
 
-export default angular.module('parameterModel', [
+export default angular.module('tractor.parameterModel', [
     ASTCreatorService.name
 ])
 .factory('ParameterModel', createParameterModelConstructor);

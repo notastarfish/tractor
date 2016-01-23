@@ -1,8 +1,5 @@
 'use strict';
 
-// Utilities:
-import isNumber from 'lodash.isnumber';
-
 // Dependencies:
 import angular from 'angular';
 
@@ -32,10 +29,10 @@ function toBoolean (value) {
 }
 
 function toNumber (value) {
-    let number = +value;
+    let number = parseFloat(value);
     if (value === 'NaN') {
         return NaN;
-    } else if (value && isNumber(number) && !Number.isNaN(number)) {
+    } else if (value && angular.isNumber(number) && !Number.isNaN(number)) {
         return number;
     }
 }
@@ -46,5 +43,5 @@ function toNull (value) {
     }
 }
 
-export default angular.module('stringToLiteralService', [])
+export default angular.module('tractor.stringToLiteralService', [])
 .service('stringToLiteralService', StringToLiteralService);

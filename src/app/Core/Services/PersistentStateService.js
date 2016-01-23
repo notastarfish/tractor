@@ -5,6 +5,7 @@ const PERSISTENT_STATE_KEY = 'PERSISTENT_STATE';
 
 // Dependencies:
 import angular from 'angular';
+import 'angular-local-storage';
 
 class PersistentStateService {
     constructor (
@@ -31,5 +32,12 @@ class PersistentStateService {
     }
 }
 
-export default angular.module('persistentStateService', [])
-.service('persistentStateService', PersistentStateService);
+export default angular.module('tractor.persistentStateService', [
+    'LocalStorageModule'
+])
+.service('persistentStateService', PersistentStateService)
+.config((
+    localStorageServiceProvider
+) => {
+    localStorageServiceProvider.setPrefix('tractor');
+});

@@ -10,15 +10,16 @@ import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
 import InteractionModel from './InteractionModel';
 import ParameterModel from './ParameterModel';
 
+// Symbols:
+const component = Symbol();
+const interactions = Symbol();
+const parameters = Symbol();
+
 function createActionModelConstructor (
     astCreatorService,
     InteractionModel,
     ParameterModel
 ) {
-    const component = Symbol();
-    const interactions = Symbol();
-    const parameters = Symbol();
-
     return class ActionModel {
         constructor (_component) {
             this[component] = _component;
@@ -55,8 +56,8 @@ function createActionModelConstructor (
             return toAST.call(this);
         }
 
-        addParameter () {
-            this.parameters.push(new ParameterModel(this));
+        addParameter (parameter = new ParameterModel(this)) {
+            this.parameters.push(parameter);
         }
 
         removeParameter (toRemove) {
@@ -65,9 +66,8 @@ function createActionModelConstructor (
             }), 1);
         }
 
-        addInteraction () {
-            let interaction = new InteractionModel(this);
-            interaction.element = this[component].browser;
+        addInteraction (interaction = new InteractionModel(this)) {
+            interaction.element = interaction.element || this[component].browser;
             this.interactions.push(interaction);
         }
 
@@ -139,7 +139,7 @@ function createActionModelConstructor (
     }
 }
 
-export default angular.module('actionModel', [
+export default angular.module('tractor.actionModel', [
     ASTCreatorService.name,
     InteractionModel.name,
     ParameterModel.name

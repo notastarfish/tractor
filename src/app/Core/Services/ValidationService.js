@@ -1,16 +1,16 @@
 'use strict';
 
 // Utilities:
-import charFunk from 'charfunk';
+import isVarName from 'is-var-name';
 
 // Dependencies:
 import angular from 'angular';
 
 class ValidationService {
     validateVariableName (variableName) {
-        return charFunk.isValidName(variableName, true) ? variableName : false;
+        return isVarName(variableName) ? variableName : false;
     }
 }
 
-export default angular.module('validationService', [])
+export default angular.module('tractor.validationService', [])
 .service('validationService', ValidationService);

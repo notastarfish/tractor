@@ -1,43 +1,36 @@
 'use strict';
 
-// ES2015:
-var babel = require('babel/register');
-
 // Utilities:
-var Promise = require('bluebird');
+import Promise from 'bluebird';
 
 // Dependencies:
-var createTestDirectoryStructure = require('./server/cli/init/create-test-directory-structure');
-var del = require('del');
+import createTestDirectoryStructure from './server/cli/init/create-test-directory-structure';
+import del from 'del';
 
 // Constants:
-var TRACTOR_E2E_TESTS_RUNNING = './tractor_e2e_tests_running';
+const TRACTOR_E2E_TESTS_RUNNING = './tractor_e2e_tests_running';
 
-module.exports = {
+export default {
     environments: [
         'http://localhost:3000',
         'http://localhost:4000'
     ],
-	beforeProtractor: function () {
-        var fileStructure = require('./server/file-structure');
+	beforeProtractor () {
+        const fileStructure = require('./server/file-structure');
 
 		this._testDirectory = this.testDirectory;
 		this.testDirectory = TRACTOR_E2E_TESTS_RUNNING;
         return createTestDirectoryStructure.run(this.testDirectory)
-        .then(function () {
-            return fileStructure.refresh();
-        }.bind(this));
+        .then(() => fileStructure.refresh());
 	},
-	afterProtractor: function () {
-        var fileStructure = require('./server/file-structure');
+	afterProtractor () {
+        const fileStructure = require('./server/file-structure');
 
 		this.testDirectory = this._testDirectory;
 		delete this._testDirectory;
         return fileStructure.refresh()
-        .then(function () {
-            return del(TRACTOR_E2E_TESTS_RUNNING, {
-                force: true
-            });
-        }.bind(this));
+        .then(() => del(TRACTOR_E2E_TESTS_RUNNING, {
+            force: true
+        }));
 	}
 };

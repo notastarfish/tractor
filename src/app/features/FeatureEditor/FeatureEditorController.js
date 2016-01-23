@@ -25,7 +25,7 @@ class FeatureEditorController extends FileEditorController {
             confirmDialogService,
             persistentStateService,
             notifierService,
-            FeatureFileService,
+            featureFileService,
             FeatureModel,
             featureFileStructure,
             featurePath
@@ -40,4 +40,6 @@ export default angular.module('featureEditorController', [
     NotifierService.name,
     PersistentStateService.name
 ])
+.constant('FeatureIndent', '  ')
+.constant('FeatureNewLine', '\n')
 .controller('FeatureEditorController', FeatureEditorController);

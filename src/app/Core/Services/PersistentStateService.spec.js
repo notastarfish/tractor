@@ -1,73 +1,69 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
-// Test Utilities:
-var chai = require('chai');
-var sinon = require('sinon');
+// Utilities:
+import chai from 'chai';
+import sinon from 'sinon';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 
 // Testing:
-require('./PersistentStateService');
-var persistentStateService;
+import './PersistentStateService';
+let persistentStateService;
 
-// Mocks:
-var MockLocalStorageService = require('./LocalStorageService.mock');
+describe('PersistentStateService.js:', () => {
+    let localStorageService;
 
-describe('PersistentStateService.js:', function () {
-    var localStorageService;
+    beforeEach(() => {
+        angular.mock.module('tractor.persistentStateService');
 
-    beforeEach(function () {
-        angular.mock.module('Core');
-
-        angular.mock.module(function ($provide) {
-            localStorageService = new MockLocalStorageService();
-            $provide.factory('localStorageService', function () {
+        angular.mock.module($provide => {
+            $provide.factory('localStorageService', () => {
+                localStorageService = {};
                 return localStorageService;
             });
         });
 
-        angular.mock.inject(function (_$httpBackend_, _persistentStateService_) {
+        angular.mock.inject((_$httpBackend_, _persistentStateService_) => {
             persistentStateService = _persistentStateService_;
         });
     });
 
-    describe('persistentStateService.get:', function () {
-        it('should get a value from the current saved state:', function () {
-            var state = {
+    describe('persistentStateService.get:', () => {
+        it('should get a value from the current saved state:', () => {
+            let state = {
                 key: 'value'
             };
 
+            localStorageService.get = angular.noop;
             sinon.stub(localStorageService, 'get').returns(state);
 
-            var value = persistentStateService.get('key');
+            let value = persistentStateService.get('key');
 
             expect(value).to.equal('value');
-
-            localStorageService.get.restore();
         });
 
-        it('should return an empty object when the current saved state is empty:', function () {
+        it('should return an empty object when the current saved state is empty:', () => {
+            localStorageService.get = angular.noop;
             sinon.stub(localStorageService, 'get').returns(null);
 
-            var value = persistentStateService.get('key');
+            let value = persistentStateService.get('key');
 
             expect(value).to.deep.equal({});
-
-            localStorageService.get.restore();
         });
 
-        it('should return an empty object when there is not an associated key on the saved state:', function () {
-            var state = {};
+        it('should return an empty object when there is not an associated key on the saved state:', () => {
+            let state = {};
 
+            localStorageService.get = angular.noop;
             sinon.stub(localStorageService, 'get').returns(state);
 
-            var value = persistentStateService.get('key');
+            let value = persistentStateService.get('key');
 
             expect(value).to.deep.equal({});
 
@@ -75,69 +71,65 @@ describe('PersistentStateService.js:', function () {
         });
     });
 
-    describe('persistentStateService.set:', function () {
-        it('should set a value on the current saved state:', function () {
-            var state = {};
+    describe('persistentStateService.set:', () => {
+        it('should set a value on the current saved state:', () => {
+            let state = {};
 
+            localStorageService.get = angular.noop;
+            localStorageService.set = angular.noop;
             sinon.stub(localStorageService, 'get').returns(state);
             sinon.stub(localStorageService, 'set');
 
             persistentStateService.set('key', 'value');
 
-            var call = localStorageService.set.getCall(0);
-            var newState = call.args[1];
+            let call = localStorageService.set.getCall(0);
+            let newState = call.args[1];
             expect(newState).to.deep.equal({ key: 'value' });
-
-            localStorageService.get.restore();
-            localStorageService.set.restore();
         });
 
-        it('should create an object to represent the saved state and set a value to it:', function () {
+        it('should create an object to represent the saved state and set a value to it:', () => {
+            localStorageService.get = angular.noop;
+            localStorageService.set = angular.noop;
             sinon.stub(localStorageService, 'get').returns(null);
             sinon.stub(localStorageService, 'set');
 
             persistentStateService.set('key', 'value');
 
-            var call = localStorageService.set.getCall(0);
-            var newState = call.args[1];
+            let call = localStorageService.set.getCall(0);
+            let newState = call.args[1];
             expect(newState).to.deep.equal({ key: 'value' });
-
-            localStorageService.get.restore();
-            localStorageService.set.restore();
         });
     });
 
-    describe('persistentStateService.remove:', function () {
-        it('should remove a value from the current saved state:', function () {
-            var state = {
+    describe('persistentStateService.remove:', () => {
+        it('should remove a value from the current saved state:', () => {
+            let state = {
                 key: 'value'
             };
 
+            localStorageService.get = angular.noop;
+            localStorageService.set = angular.noop;
             sinon.stub(localStorageService, 'get').returns(state);
             sinon.stub(localStorageService, 'set');
 
             persistentStateService.remove('key');
 
-            var call = localStorageService.set.getCall(0);
-            var newState = call.args[1];
+            let call = localStorageService.set.getCall(0);
+            let newState = call.args[1];
             expect(newState).to.deep.equal({});
-
-            localStorageService.get.restore();
-            localStorageService.set.restore();
         });
 
-        it('should still work if there is no saved state:', function () {
+        it('should still work if there is no saved state:', () => {
+            localStorageService.get = angular.noop;
+            localStorageService.set = angular.noop;
             sinon.stub(localStorageService, 'get').returns(null);
             sinon.stub(localStorageService, 'set');
 
             persistentStateService.remove('key');
 
-            var call = localStorageService.set.getCall(0);
-            var newState = call.args[1];
+            let call = localStorageService.set.getCall(0);
+            let newState = call.args[1];
             expect(newState).to.deep.equal({});
-
-            localStorageService.get.restore();
-            localStorageService.set.restore();
         });
     });
 });

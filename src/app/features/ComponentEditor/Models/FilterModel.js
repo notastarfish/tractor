@@ -2,31 +2,36 @@
 
 // Utilities:
 import dedent from 'dedent';
-import isNumber from 'lodash.isnumber';
 
 // Dependencies:
 import angular from 'angular';
 import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
 import StringToLiteralService from '../../../Core/Services/StringToLiteralService';
 
+// Symbols:
+const element = Symbol();
+const types = Symbol();
+
 function createFilterModelConstructor (
     astCreatorService,
     stringToLiteralService
 ) {
-    const element = Symbol();
-
     return class FilterModel {
         constructor (_element) {
             this[element] = _element;
+            this[types] = ['model', 'binding', 'text', 'css', 'options', 'repeater'];
 
             this.locator = '';
-            this.types = ['model', 'binding', 'text', 'css', 'options', 'repeater']
             let [type] = this.types
             this.type = type;
         }
 
         get element () {
             return this[element];
+        }
+
+        get types () {
+            return this[types];
         }
 
         get isGroup () {
@@ -54,7 +59,7 @@ function createFilterModelConstructor (
         let locator = astCreatorService.literal(this.locator);
 
         let number = stringToLiteralService.toLiteral(locator.value);
-        if (isNumber(number)) {
+        if (angular.isNumber(number)) {
             return astCreatorService.literal(number);
         } else {
             let template = dedent(`
@@ -83,7 +88,7 @@ function createFilterModelConstructor (
     }
 }
 
-export default angular.module('filterModel', [
+export default angular.module('tractor.filterModel', [
     ASTCreatorService.name,
     StringToLiteralService.name
 ])

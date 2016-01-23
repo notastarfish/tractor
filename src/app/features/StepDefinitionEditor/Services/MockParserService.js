@@ -47,7 +47,7 @@ function parseAction (mock, mockCallExpression) {
 }
 
 function parseUrl (mock, mockCallExpression) {
-    let [argument] = mockCallExpression.callee.object.arguments.reverse();
+    let [argument] = mockCallExpression.callee.object.arguments.slice(-1);
     let url = argument.raw;
     let urlRegex = new RegExp(url.replace(/^\//, '').replace(/\/$/, ''));
     assert(urlRegex);
@@ -72,4 +72,4 @@ function parsePassThrough (mock, mockCallExpression) {
 export default angular.module('mockParserService', [
     MockModel.name
 ])
-.service('MockParserService', MockParserService);
+.service('mockParserService', MockParserService);

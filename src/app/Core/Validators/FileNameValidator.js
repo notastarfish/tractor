@@ -12,23 +12,23 @@ class FileNameValidator {
 
         this.restrict = 'A';
         this.require = 'ngModel';
-    }
 
-    link ($scope, $element, $attrs, ngModelController) {
-        ngModelController.$validators.fileName = function (value) {
-            if (value.includes('_')) {
-                this.notifierService.error('Invalid character: "_"');
-                return false;
-            }
-            if (value.includes('/')) {
-                this.notifierService.error('Invalid character: "/"');
-                return false;
-            }
-            if (value.includes('\\')) {
-                this.notifierService.error('Invalid character: "\\"');
-                return false;
-            }
-            return true;
+        this.link = ($scope, $element, $attrs, ngModelController) => {
+            ngModelController.$validators.fileName = function (value) {
+                if (value.includes('_')) {
+                    this.notifierService.error('Invalid character: "_"');
+                    return false;
+                }
+                if (value.includes('/')) {
+                    this.notifierService.error('Invalid character: "/"');
+                    return false;
+                }
+                if (value.includes('\\')) {
+                    this.notifierService.error('Invalid character: "\\"');
+                    return false;
+                }
+                return true;
+            };
         };
     }
 }
@@ -36,4 +36,6 @@ class FileNameValidator {
 export default angular.module('fileName', [
     NotifierService.name
 ])
-.directive('fileName', FileNameValidator);
+.directive('fileName', (
+    notifierService
+) => new FileNameValidator(notifierService));

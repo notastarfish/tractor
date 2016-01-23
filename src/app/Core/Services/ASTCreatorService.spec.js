@@ -1,58 +1,66 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
-// Test Utilities:
-var chai = require('chai');
+// Utilities:
+import chai from 'chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 
 // Testing:
-require('./ASTCreatorService');
-var astCreatorService;
+import './ASTCreatorService';
+let astCreatorService;
 
-describe('ASTCreatorService.js:', function () {
-    beforeEach(function () {
-        angular.mock.module('Core');
+describe('ASTCreatorService.js:', () => {
+    beforeEach(() => {
+        angular.mock.module('tractor.astCreatorService');
 
-        angular.mock.inject(function (_astCreatorService_) {
+        angular.mock.inject((_astCreatorService_) => {
             astCreatorService = _astCreatorService_;
         });
     });
 
-    describe('ASTCreatorService.expressionStatement:', function () {
-        it('should create a new `expressionStatement` object:', function () {
-            var expression = {};
-            var expressionStatement = astCreatorService.expressionStatement(expression);
+    describe('ASTCreatorService.expressionStatement:', () => {
+        it('should create a new `expressionStatement` object:', () => {
+            let expression = {};
+
+            let expressionStatement = astCreatorService.expressionStatement(expression);
+
             expect(expressionStatement.type).to.equal('ExpressionStatement');
             expect(expressionStatement.expression).to.equal(expression);
         });
     });
 
-    describe('ASTCreatorService.identifier:', function () {
-        it('should create a new `identifier` object:', function () {
-            var name = {};
-            var identifier = astCreatorService.identifier(name);
+    describe('ASTCreatorService.identifier:', () => {
+        it('should create a new `identifier` object:', () => {
+            let name = {};
+
+            let identifier = astCreatorService.identifier(name);
+
             expect(identifier.type).to.equal('Identifier');
             expect(identifier.name).to.equal(name);
         });
     });
 
-    describe('ASTCreatorService.literal:', function () {
-        it('should create a new `literal` object:', function () {
-            var value = {};
-            var literal = astCreatorService.literal(value);
+    describe('ASTCreatorService.literal:', () => {
+        it('should create a new `literal` object:', () => {
+            let value = {};
+
+            let literal = astCreatorService.literal(value);
+
             expect(literal.type).to.equal('Literal');
             expect(literal.value).to.equal(value);
         });
 
-        it('should have the `raw` value if the literal is a RegExp:', function () {
-            var value = /RegExp/;
-            var literal = astCreatorService.literal(value);
+        it('should have the `raw` value if the literal is a RegExp:', () => {
+            let value = /RegExp/;
+
+            let literal = astCreatorService.literal(value);
+
             expect(literal.raw).to.equal('/RegExp/');
         });
     });

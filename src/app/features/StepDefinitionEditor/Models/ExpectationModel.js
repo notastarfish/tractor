@@ -21,7 +21,7 @@ function createExpectationModelConstructor (
             this[step] = _step;
 
             let [componentInstance] = this.step.stepDefinition.componentInstances;
-            this[component] = componentInstance;
+            this.component = componentInstance;
 
             this.conditions = ['equal', 'contain'];
             let [condition] = this.conditions;
@@ -39,8 +39,8 @@ function createExpectationModelConstructor (
         }
         set component (newComponent) {
             this[component] = newComponent;
-            let [firstAction] = this.component.component.actions
-            this.action = firstAction;
+            let [action] = this.component.component.actions
+            this.action = action;
         }
 
         get action () {
@@ -51,20 +51,25 @@ function createExpectationModelConstructor (
             this[args] = parseArguments.call(this);
         }
 
+        get arguments () {
+            return this[args];
+        }
+
         get ast () {
             return toAST.call(this);
         }
     }
 
     function toAST () {
-        let template = 'expect(<%= component %>.<%= action %>(%= expectationArguments %)).to.eventually.<%= condition %>(<%= expectedResult %>); ';
-
         let expectationArguments = this.arguments.map(argument => argument.ast);
-        let expectedResult = astCreatorService.literal(stringToLiteralService.toLiteral(this.value) || this.value);
+        let expectedResult = astCreatorService.literal(stringToLiteralService.toLiteral(this.value));
 
         let action = astCreatorService.identifier(this.action.variableName);
         let component = astCreatorService.identifier(this.component.variableName);
         let condition = astCreatorService.identifier(this.condition);
+
+        let template = 'expect(<%= component %>.<%= action %>(%= expectationArguments %)).to.eventually.<%= condition %>(<%= expectedResult %>); ';
+
         return astCreatorService.template(template, { action, component, condition, expectationArguments, expectedResult }).expression;
     }
 
@@ -77,7 +82,7 @@ function createExpectationModelConstructor (
     }
 }
 
-export default angular.module('expectationModel', [
+export default angular.module('tractor.expectationModel', [
     ArgumentModel.name,
     ASTCreatorService.name,
     StringToLiteralService.name

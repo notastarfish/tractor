@@ -2,8 +2,8 @@
 'use strict';
 
 // Dependencies:
-var babel = require('babel/register')({
-    only: /tractor\/server\//
+var babel = require('babel-core/register')({
+    ignore: /node_modules/
 });
 var tractor = require('commander');
 var log = require('npmlog');

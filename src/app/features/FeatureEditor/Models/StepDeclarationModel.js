@@ -3,13 +3,21 @@
 // Dependencies:
 import angular from 'angular';
 
+// Symbols:
+const types = Symbol();
+
 function createStepDeclarationModelConstructor () {
-    class StepDeclarationModel {
+    return class StepDeclarationModel {
         constructor () {
-            this.types = ['Given', 'When', 'Then', 'And', 'But'];
+            this[types] = ['Given', 'When', 'Then', 'And', 'But'];
             let [type] = this.types;
+
             this.type = type;
             this.step = '';
+        }
+
+        get types () {
+            return this[types];
         }
 
         get feature () {
@@ -17,17 +25,10 @@ function createStepDeclarationModelConstructor () {
         }
     }
 
-    StepDeclarationModel.getExampleVariableNames = step => {
-        return step.match(new RegExp('<.+?>', 'g'))
-        .map(result => result.replace(/^</, '').replace(/>$/, ''));
-    }
-
-    return StepDeclarationModel;
-
     function toFeature () {
         return `${this.type} ${this.step}`;
     }
 }
 
-export default angular.module('stepDeclarationModel', [])
+export default angular.module('tractor.stepDeclarationModel', [])
 .factory('StepDeclarationModel', createStepDeclarationModelConstructor);

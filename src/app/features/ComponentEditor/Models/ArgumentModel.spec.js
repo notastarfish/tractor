@@ -1,41 +1,43 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
-// Test Utilities:
-var chai = require('chai');
-var dirtyChai = require('dirty-chai');
+// Utilities:
+import chai from 'chai';
+import dirtyChai from 'dirty-chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 chai.use(dirtyChai);
 
+// Dependencies:
+import escodegen from 'escodegen';
+
 // Testing:
-require('./ArgumentModel');
-var ArgumentModel;
+import './ArgumentModel';
+let ArgumentModel;
 
-describe('ArgumentModel.js:', function () {
-    beforeEach(function () {
-        angular.mock.module('ComponentEditor');
+describe('ArgumentModel.js:', () => {
+    beforeEach(() => {
+        angular.mock.module('tractor.argumentModel');
 
-        angular.mock.inject(function (_ArgumentModel_) {
+        angular.mock.inject(_ArgumentModel_ => {
             ArgumentModel = _ArgumentModel_;
         });
     });
 
-    describe('ArgumentModel constructor:', function () {
-        it('should create a new `ArgumentModel`:', function () {
-            var actionModel = new ArgumentModel();
+    describe('ArgumentModel constructor:', () => {
+        it('should create a new `ArgumentModel`:', () => {
+            let actionModel = new ArgumentModel();
             expect(actionModel).to.be.an.instanceof(ArgumentModel);
         });
 
-        it('should have default properties:', function () {
-            var method = {};
-
-            var argumentModel = new ArgumentModel(method);
+        it('should have default properties:', () => {
+            let method = {};
+            let argumentModel = new ArgumentModel(method);
 
             expect(argumentModel.method).to.equal(method);
             expect(argumentModel.name).to.be.false();
@@ -46,88 +48,83 @@ describe('ArgumentModel.js:', function () {
         });
     });
 
-    describe('ArgumentModel.method:', function () {
-        it('should return the Method that this Argument belongs to:', function () {
-            var method = {};
-
-            var argumentModel = new ArgumentModel(method);
+    describe('ArgumentModel.method:', () => {
+        it('should return the Method that this Argument belongs to:', () => {
+            let method = {};
+            let argumentModel = new ArgumentModel(method);
 
             expect(argumentModel.method).to.equal(method);
         });
 
-        it('should return `null` if there is not a Method:', function () {
-            var argumentModel = new ArgumentModel();
+        it('should return `null` if there is not a Method:', () => {
+            let argumentModel = new ArgumentModel();
 
             expect(argumentModel.method).to.be.null();
         });
     });
 
-    describe('ArgumentModel.name:', function () {
-        it('should return the name of the Argument:', function () {
-            var argument = {
+    describe('ArgumentModel.name:', () => {
+        it('should return the name of the Argument:', () => {
+            let argument = {
                 name: 'argument'
             };
-            var argumentModel = new ArgumentModel({}, argument);
+            let argumentModel = new ArgumentModel({}, argument);
 
             expect(argumentModel.name).to.equal('argument');
         });
     });
 
-    describe('ArgumentModel.description:', function () {
-        it('should return the description of the Argument:', function () {
-            var argument = {
+    describe('ArgumentModel.description:', () => {
+        it('should return the description of the Argument:', () => {
+            let argument = {
                 description: 'description'
             };
-            var argumentModel = new ArgumentModel({}, argument);
+            let argumentModel = new ArgumentModel({}, argument);
 
             expect(argumentModel.description).to.equal('description');
         });
     });
 
-    describe('ArgumentModel.type:', function () {
-        it('should return the type of the Argument:', function () {
-            var argument = {
+    describe('ArgumentModel.type:', () => {
+        it('should return the type of the Argument:', () => {
+            let argument = {
                 type: 'type'
             };
-            var argumentModel = new ArgumentModel({}, argument);
+            let argumentModel = new ArgumentModel({}, argument);
 
             expect(argumentModel.type).to.equal('type');
         });
     });
 
-    describe('ArgumentModel.required:', function () {
-        it('should return the type of the Argument:', function () {
-            var argument = {
+    describe('ArgumentModel.required:', () => {
+        it('should return the type of the Argument:', () => {
+            let argument = {
                 required: true
             };
-            var argumentModel = new ArgumentModel({}, argument);
+            let argumentModel = new ArgumentModel({}, argument);
 
             expect(argumentModel.required).to.be.true();
         });
     });
 
-    describe('ArgumentModel.ast:', function () {
-        it('should return a literal value for JavaScript literals:', function () {
-            var escodegen = require('escodegen');
-
-            var argumentModel = new ArgumentModel();
+    describe('ArgumentModel.ast:', () => {
+        it('should return a literal value for JavaScript literals:', () => {
+            let argumentModel = new ArgumentModel();
             argumentModel.value = 'true';
-            var ast = argumentModel.ast;
+            let ast = argumentModel.ast;
 
             expect(escodegen.generate(ast)).to.equal('true');
         });
 
-        it('should return an identifier if the Argument value matches a parameter of the action:', function () {
-            var escodegen = require('escodegen');
-
-            var parameter = {
+        it('should return an identifier if the Argument value matches a parameter of the action:', () => {
+            let parameter = {
                 name: 'parameter',
                 variableName: 'parameter'
             };
-            var interaction = {
+            let interaction = {
                 method: {}
             };
-            var method = {
+            let method = {
                 interaction: {
                     action: {
                         parameters: [parameter],
@@ -136,17 +133,15 @@ describe('ArgumentModel.js:', function () {
                 }
             };
 
-            var argumentModel = new ArgumentModel(method);
+            let argumentModel = new ArgumentModel(method);
             argumentModel.value = 'parameter';
-            var ast = argumentModel.ast;
+            let ast = argumentModel.ast;
 
             expect(escodegen.generate(ast)).to.equal('parameter');
         });
 
-        it('should return an identifier if the Argument value matches the return value of an interaction:', function () {
-            var escodegen = require('escodegen');
-
-            var interaction = {
+        it('should return an identifier if the Argument value matches the return value of an interaction:', () => {
+            let interaction = {
                 method: {
                     string: {
                         name: 'returnValue'
@@ -154,7 +149,7 @@ describe('ArgumentModel.js:', function () {
                     returns: 'string'
                 }
             };
-            var method = {
+            let method = {
                 interaction: {
                     action: {
                         parameters: [],
@@ -163,19 +158,17 @@ describe('ArgumentModel.js:', function () {
                 }
             };
 
-            var argumentModel = new ArgumentModel(method);
+            let argumentModel = new ArgumentModel(method);
             argumentModel.value = 'returnValue';
-            var ast = argumentModel.ast;
+            let ast = argumentModel.ast;
 
             expect(escodegen.generate(ast)).to.equal('returnValue');
         });
 
-        it('should return null if the Argument has no value:', function () {
-            var escodegen = require('escodegen');
-
-            var argumentModel = new ArgumentModel();
+        it('should return null if the Argument has no value:', () => {
+            let argumentModel = new ArgumentModel();
             argumentModel.value = '';
-            var ast = argumentModel.ast;
+            let ast = argumentModel.ast;
 
             expect(escodegen.generate(ast)).to.equal('null');
         });

@@ -16,8 +16,8 @@ class ComponentFileService extends FileService {
     }
 }
 
-export default angular.module('componentFileService', [
+export default angular.module('tractor.componentFileService', [
     ComponentParserService.name,
     FileStructureService.name
 ])
-.service('ComponentFileService', ComponentFileService);
+.service('componentFileService', () => new ComponentFileService());

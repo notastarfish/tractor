@@ -3,12 +3,16 @@
 // Utilities:
 import flatten from 'lodash.flatten';
 import pluck from 'lodash.pluck';
-import unique from 'lodash.unique';
+import unique from 'lodash.uniq';
 
 // Dependencies:
 import angular from 'angular';
 import ExampleModel from './ExampleModel';
 import StepDeclarationModel from './StepDeclarationModel';
+
+// Symbols:
+const stepDeclarations = Symbol();
+const examples = Symbol();
 
 function createScenarioModelConstructor (
     ExampleModel,
@@ -16,10 +20,7 @@ function createScenarioModelConstructor (
     FeatureNewLine,
     StepDeclarationModel
 ) {
-    const stepDeclarations = Symbol();
-    const examples = Symbol();
-
-    return class ScenarioModel {
+    class ScenarioModel {
         constructor () {
             this[stepDeclarations] = [];
             this[examples] = [];
@@ -64,9 +65,21 @@ function createScenarioModelConstructor (
         }
     }
 
+    ScenarioModel.getExampleVariableNames = getExampleVariableNames;
+
+    return ScenarioModel;
+
+    function getExampleVariableNames (step) {
+        let matches = step.match(new RegExp('<.+?>', 'g'));
+        if (matches) {
+            return matches.map(result => result.replace(/^</, '').replace(/>$/, ''));
+        } else {
+            return [];
+        }
+    }
+
     function getExampleVariables (stepDeclarations) {
-        return unique(flatten(pluck(stepDeclarations, 'step')
-        .map(StepDeclarationModel.getExampleVariableNames)))
+        return unique(flatten(pluck(stepDeclarations, 'step').map(getExampleVariableNames)))
     }
 
     function toFeatureString () {
@@ -89,7 +102,7 @@ function createScenarioModelConstructor (
     }
 }
 
-export default angular.module('scenarioModel', [
+export default angular.module('tractor.scenarioModel', [
     ExampleModel.name,
     StepDeclarationModel.name
 ])

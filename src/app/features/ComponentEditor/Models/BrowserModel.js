@@ -4,11 +4,13 @@
 import angular from 'angular';
 import BrowserMethods from './BrowserMethods';
 
+// Symbols:
+const name = Symbol();
+
 function createBrowserModelConstructor () {
     return class BrowserModel {
         constructor () {
-            this.name = 'browser';
-            this.variableName = this.name;
+            this[name] = 'browser';
 
             this.methods = [
                 BrowserMethods.GET,
@@ -18,8 +20,16 @@ function createBrowserModelConstructor () {
                 BrowserMethods.WAIT_FOR_ANGULAR
             ];
         }
+
+        get name () {
+            return this[name];
+        }
+
+        get variableName () {
+            return this[name];
+        }
     }
 }
 
-export default angular.module('browserModel', [])
+export default angular.module('tractor.browserModel', [])
 .factory('BrowserModel', createBrowserModelConstructor);

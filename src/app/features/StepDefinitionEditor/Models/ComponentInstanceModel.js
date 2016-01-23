@@ -20,12 +20,12 @@ function createComponentInstanceModelConstructor (
             this[stepDefinition] = _stepDefinition;
         }
 
-        get stepDefinition () {
-            return this[stepDefinition];
-        }
-
         get component () {
             return this[component];
+        }
+
+        get stepDefinition () {
+            return this[stepDefinition];
         }
 
         get name () {
@@ -51,7 +51,7 @@ function createComponentInstanceModelConstructor (
         let template = 'var <%= constructor %> = require(<%= relativePath %>), ';
         template += '<%= name %> = new <%= constructor %>(); ';
 
-        // Sw33t hax()rz to get around the browserify "path" shim not working on Windows.
+        // Sw33t hax()rz to get around the node "path" shim not working on Windows.
         let stepDefinitionPath = this.stepDefinition.path.replace(/^[A-Z]:\\/, '').replace(/\\/g, '/');
         let componentPath = this.component.path.replace(/^[A-Z]:\\/, '').replace(/\\/g, '/');
         let relativePath = path.relative(path.dirname(stepDefinitionPath), componentPath);
@@ -64,7 +64,7 @@ function createComponentInstanceModelConstructor (
     }
 }
 
-export default angular.module('componentInstanceModel', [
+export default angular.module('tractor.componentInstanceModel', [
     ASTCreatorService.name
 ])
 .factory('ComponentInstanceModel', createComponentInstanceModelConstructor);

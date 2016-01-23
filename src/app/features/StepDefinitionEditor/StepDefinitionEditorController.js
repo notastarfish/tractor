@@ -14,8 +14,6 @@ class StepDefinitionEditorController extends FileEditorController {
         confirmDialogService,
         persistentStateService,
         notifierService,
-        componentParserService,
-        mockDataParserService,
         stepDefinitionFileService,
         stepDefinitionFileStructure,
         stepDefinitionPath
@@ -25,7 +23,7 @@ class StepDefinitionEditorController extends FileEditorController {
             confirmDialogService,
             persistentStateService,
             notifierService,
-            StepDefinitionFileService,
+            stepDefinitionFileService,
             null,
             stepDefinitionFileStructure,
             stepDefinitionPath

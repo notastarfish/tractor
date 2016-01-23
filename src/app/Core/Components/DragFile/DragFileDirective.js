@@ -6,14 +6,14 @@ import angular from 'angular';
 class DragFileDirective {
     constructor () {
         this.restrict = 'A';
-    }
 
-    link ($scope, $element) {
-        let [element] = $element;
+        this.link = ($scope, $element) => {
+            let [element] = $element;
 
-        element.draggable = true;
-        element.addEventListener('dragstart', event => dragstart($scope, event));
-        element.addEventListener('dragend', dragend);
+            element.draggable = true;
+            element.addEventListener('dragstart', dragstart.bind(element, $scope));
+            element.addEventListener('dragend', dragend);
+        };
     }
 }
 
@@ -29,5 +29,5 @@ function dragend () {
     return false;
 }
 
-export default angular.module('tractorDragFile', [])
-.directive('tractorDragFile', DragFileDirective);
+export default angular.module('tractor.dragFile', [])
+.directive('tractorDragFile', () => new DragFileDirective());

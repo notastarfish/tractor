@@ -3,23 +3,25 @@
 // Dependencies:
 import angular from 'angular';
 
-function createMockDataModelConstructor () {
-    const json = Symbol();
+// Symbols:
+const json = Symbol();
+const options = Symbol();
 
+function createMockDataModelConstructor () {
     return class MockDataModel {
-        constructor (_json = '{}', options = {}) {
-            this[json] = json;
-            this.options = options;
+        constructor (_json = '{}', _options = {}) {
+            this[json] = _json;
+            this[options] = _options;
 
             this.name = '';
         }
 
         get isSaved () {
-            return !!this.options.isSaved;
+            return !!this[options].isSaved;
         }
 
         get path () {
-            return this.options.path;
+            return this[options].path;
         }
 
         get json () {
@@ -27,12 +29,12 @@ function createMockDataModelConstructor () {
             try {
                 formatted = JSON.stringify(JSON.parse(this[json]), null, '    ');
             } catch (e) {
-                formatted = json;
+                formatted = this[json];
             }
             return formatted;
         }
 
-        set function (newJSON) {
+        set json (newJSON) {
             this[json] = newJSON;
         }
 
@@ -42,5 +44,5 @@ function createMockDataModelConstructor () {
     };
 }
 
-export default angular.module('mockDataModel', [])
+export default angular.module('tractor.mockDataModel', [])
 .factory('MockDataModel', createMockDataModelConstructor);

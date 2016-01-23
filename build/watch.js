@@ -1,18 +1,13 @@
 'use strict';
 
-// Config:
-var config = require('./config');
-
 // Utilities:
-var gulp = require('gulp');
+import gulp from 'gulp';
 
-module.exports = watch;
-
-function watch (reportTaskDone) {
-    gulp.watch(config.serverDir + '/**/*', ['test-server']);
-    gulp.watch(config.appDir + '/**/*', ['test-client']);
-    gulp.watch(config.stylesDir + '/**/*', ['styles']);
-    gulp.watch(config.imagesDir + '/**/*', ['images']);
-    gulp.watch(config.src + 'index.html', ['markup']);
+export default function watch (reportTaskDone) {
+    gulp.watch('./server/**/*', ['test-server']);
+    gulp.watch('./src/app/**/*', ['test-client']);
+    gulp.watch('./src/styles/**/*', ['styles']);
+    gulp.watch('./src/images/**/*', ['images']);
+    gulp.watch('./src/index.html', ['markup']);
     reportTaskDone();
 }

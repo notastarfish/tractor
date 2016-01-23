@@ -6,26 +6,25 @@ import Promise from 'bluebird';
 // Dependencies:
 import angular from 'angular';
 
-class HttpResponseInterceptor {
-    constructor (
-        notifierService
-    ) {
-        this.notifierService = notifierService;
-    }
-
-    handleResponseData (response) {
+const HttpResponseInterceptor = notifierService => {
+    const handleResponseData = response => {
         return Promise.resolve(response.config.url.match(/.html$/) ? response : response.data);
-    }
+    };
 
-    handleResponseError (response) {
+    const handleResponseError = response => {
         let error = new Error();
-        this.notifierService.error(response.data.error);
+        notifierService.error(response.data.error);
         error.message = response.data.error;
         error.response = response;
         return Promise.reject(error);
-    }
+    };
+
+    return {
+        response: handleResponseData,
+        responseError: handleResponseError
+    };
 }
 
-export default angular.module('httpResponseInterceptor', [])
+export default angular.module('tractor.httpResponseInterceptor', [])
 .factory('httpResponseInterceptor', HttpResponseInterceptor)
 .config($httpProvider => $httpProvider.interceptors.push('httpResponseInterceptor'));

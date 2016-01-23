@@ -8,7 +8,7 @@
             <div>
                 <tractor-variable-input class="file-options__name-input"
                     ng-if="!componentEditor.fileModel.isSaved"
-                    form="file-editor"
+                    form="componentEditor.fileEditor"
                     label="Name"
                     model="componentEditor.fileModel"
                     example="Component"
@@ -51,7 +51,7 @@
                                 </tractor-action>
 
                                 <tractor-variable-input
-                                    form="file-editor"
+                                    form="componentEditor.fileEditor"
                                     label="Name"
                                     model="domElement"
                                     example="element">
@@ -61,7 +61,7 @@
                                     model="domElement.selector">
                                 </tractor-select>
                                 <tractor-text-input
-                                    form="file-editor"
+                                    form="componentEditor.fileEditor"
                                     label="Locator"
                                     model="domElement.selector"
                                     example="someController.someModel">
@@ -73,10 +73,10 @@
                                     <ol ng-if="domElement.filters.length > 1" as-sortable ng-model="domElement.sortableFilters" is-disabled="domElement.filters.length < 3">
                                         <li class="file-editor__list-item" ng-repeat="filter in domElement.sortableFilters" as-sortable-item>
                                             <tractor-action
-                                                    model="domElement"
-                                                    action="Remove filter"
-                                                    argument="filter"
-                                                    icon="remove">
+                                                model="domElement"
+                                                action="Remove filter"
+                                                argument="filter"
+                                                icon="remove">
                                             </tractor-action>
                                             <div class="file-editor__list-item-sort-handle" title="Drag to sort"
                                                  ng-if="domElement.filters.length > 2"
@@ -84,14 +84,14 @@
                                             </div>
 
                                             <tractor-select ng-if="!domElement.filters[$index].isGroup"
-                                                            label="Type"
-                                                            model="filter">
+                                                label="Type"
+                                                model="filter">
                                             </tractor-select>
                                             <tractor-text-input
-                                                    form="file-editor"
-                                                    label="Locator"
-                                                    model="filter"
-                                                    example="someController.someModel">
+                                                form="componentEditor.fileEditor"
+                                                label="Locator"
+                                                model="filter"
+                                                example="someController.someModel">
                                             </tractor-text-input>
                                         </li>
                                     </ol>
@@ -131,7 +131,7 @@
                                 </tractor-action>
 
                                 <tractor-variable-input
-                                    form="file-editor"
+                                    form="componentEditor.fileEditor"
                                     label="Name"
                                     model="action"
                                     example="action">
@@ -151,7 +151,7 @@
                                             <div ng-if="action.parameters.length > 1" class="file-editor__list-item-sort-handle" as-sortable-item-handle title="Drag to sort"></div>
 
                                             <tractor-variable-input
-                                                form="file-editor"
+                                                form="componentEditor.fileEditor"
                                                 label="Name"
                                                 model="parameter"
                                                 example="parameter">
@@ -193,7 +193,7 @@
 
                                             <div ng-repeat="argument in interaction.arguments">
                                                 <tractor-literal-input
-                                                    form="file-editor"
+                                                    form="componentEditor.fileEditor"
                                                     name="argument.name"
                                                     model="argument"
                                                     description="argument.description"

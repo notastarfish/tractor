@@ -1,212 +1,205 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
 // Utilities:
-var _ = require('lodash');
-
-// Test Utilities:
-var chai = require('chai');
+import chai from 'chai';
+import dedent from 'dedent';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
+
+// Dependencies:
+import escodegen from 'escodegen';
 
 // Testing:
-require('./InteractionModel');
-var InteractionModel;
+import './InteractionModel';
+let InteractionModel;
 
-describe('InteractionModel.js:', function () {
-    var MethodModel;
+describe('InteractionModel.js:', () => {
+    let MethodModel;
 
-    beforeEach(function () {
-        angular.mock.module('ComponentEditor');
+    beforeEach(() => {
+        angular.mock.module('tractor.interactionModel');
 
-        angular.mock.inject(function (_InteractionModel_, _MethodModel_) {
+        angular.mock.inject((
+            _InteractionModel_,
+            _MethodModel_
+        ) => {
             InteractionModel = _InteractionModel_;
             MethodModel = _MethodModel_;
         });
     });
 
-    describe('InteractionModel constructor:', function () {
-        it('should create a new `InteractionModel`:', function () {
-            var interactionModel = new InteractionModel();
+    describe('InteractionModel constructor:', () => {
+        it('should create a new `InteractionModel`:', () => {
+            let interactionModel = new InteractionModel();
             expect(interactionModel).to.be.an.instanceof(InteractionModel);
         });
 
-        it('should have default properties:', function () {
-            var action = {};
+        it('should have default properties:', () => {
+            let action = {};
 
-            var interactionModel = new InteractionModel(action);
+            let interactionModel = new InteractionModel(action);
 
             expect(interactionModel.action).to.equal(action);
         });
     });
 
-    describe('InteractionModel.element:', function () {
-        it('should return the Element that the Interaction occurs on:', function () {
-            var method = {
+    describe('InteractionModel.element:', () => {
+        it('should return the Element that the Interaction occurs on:', () => {
+            let method = {
                 arguments: []
             };
-            var element = {
+            let element = {
                 methods: [method]
             };
 
-            var interactionModel = new InteractionModel();
+            let interactionModel = new InteractionModel();
             interactionModel.element = element;
 
             expect(interactionModel.element).to.equal(element);
         });
 
-        it('should set the `method` of the Interaction to the first Method of the Element:', function () {
-            var method = {
+        it('should set the `method` of the Interaction to the first Method of the Element:', () => {
+            let method = {
                 arguments: []
             };
-            var element = {
+            let element = {
                 methods: [method]
             };
 
-            var interactionModel = new InteractionModel();
+            let interactionModel = new InteractionModel();
             interactionModel.element = element;
 
             expect(interactionModel.method).to.equal(method);
         });
     });
 
-    describe('InteractionModel.method:', function () {
-        it('should return the Method to be called on the Element:', function () {
-            var method = {
+    describe('InteractionModel.method:', () => {
+        it('should return the Method to be called on the Element:', () => {
+            let method = {
                 arguments: []
             };
 
-            var interactionModel = new InteractionModel();
+            let interactionModel = new InteractionModel();
             interactionModel.method = method;
 
             expect(interactionModel.method).to.equal(method);
         });
 
-        it('should set the `methodInstance` of the Interaction to a new MethodModel:', function () {
-            var method = {
+        it('should set the `methodInstance` of the Interaction to a new MethodModel:', () => {
+            let method = {
                 arguments: []
             };
 
-            var interactionModel = new InteractionModel();
+            let interactionModel = new InteractionModel();
             interactionModel.method = method;
 
             expect(interactionModel.methodInstance).to.be.an.instanceof(MethodModel);
         });
     });
 
-    describe('InteractionModel.arguments:', function () {
-        it('should return the arguments required for the Method of the Interaction:', function () {
-            var method = {
+    describe('InteractionModel.arguments:', () => {
+        it('should return the arguments required for the Method of the Interaction:', () => {
+            let method = {
                 arguments: []
             };
 
-            var interactionModel = new InteractionModel();
+            let interactionModel = new InteractionModel();
             interactionModel.method = method;
 
             expect(interactionModel.arguments).to.deep.equal([]);
         });
     });
 
-    describe('InteractionModel.ast:', function () {
-        it('should be the AST of the Interaction:', function () {
-            var escodegen = require('escodegen');
-            var os = require('os');
-
-            var method = {
+    describe('InteractionModel.ast:', () => {
+        it('should be the AST of the Interaction:', () => {
+            let method = {
                 name: 'method'
             };
-            var element = {
+            let element = {
                 variableName: 'element',
                 methods: [method]
             };
 
-            var interactionModel = new InteractionModel();
+            let interactionModel = new InteractionModel();
             interactionModel.element = element;
-            var ast = interactionModel.ast;
+            let ast = interactionModel.ast;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'new Promise(function (resolve) {' + os.EOL +
-                '    resolve(self.element.method());' + os.EOL +
-                '})'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                new Promise(function (resolve) {
+                    resolve(self.element.method());
+                })
+            `));
         });
 
-        it('should handle method on the global `browser` Element:', function () {
-            var escodegen = require('escodegen');
-            var os = require('os');
-
-            var method = {
+        it('should handle method on the global `browser` Element:', () => {
+            let method = {
                 name: 'method'
             };
-            var element = {
+            let element = {
                 variableName: 'browser',
                 methods: [method]
             };
 
-            var interactionModel = new InteractionModel();
+            let interactionModel = new InteractionModel();
             interactionModel.element = element;
-            var ast = interactionModel.ast;
+            let ast = interactionModel.ast;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'new Promise(function (resolve) {' + os.EOL +
-                '    resolve(browser.method());' + os.EOL +
-                '})'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                new Promise(function (resolve) {
+                    resolve(browser.method());
+                })
+            `));
         });
 
-        it('should handle methods that return a promise:', function () {
-            var escodegen = require('escodegen');
-
-            var method = {
+        it('should handle methods that return a promise:', () => {
+            let method = {
                 name: 'method',
                 returns: 'promise'
             };
-            var element = {
+            let element = {
                 variableName: 'element',
                 methods: [method]
             };
 
-            var interactionModel = new InteractionModel();
+            let interactionModel = new InteractionModel();
             interactionModel.element = element;
-            var ast = interactionModel.ast;
+            let ast = interactionModel.ast;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'self.element.method()'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                self.element.method()
+            `));
         });
 
-        it('should handle methods that have arguments:', function () {
-            var escodegen = require('escodegen');
-
-            var argument = {};
-            var action = {
+        it('should handle methods that have arguments:', () => {
+            let action = {
                 parameters: [],
                 interactions: []
             };
-            var method = {
+            let method = {
                 name: 'method',
                 returns: 'promise',
-                arguments: [argument]
+                arguments: [{}]
             };
-            var element = {
+            let element = {
                 variableName: 'element',
                 methods: [method]
             };
 
-            var interactionModel = new InteractionModel(action);
+            let interactionModel = new InteractionModel(action);
             interactionModel.element = element;
-            var argumentOne = _.first(interactionModel.arguments);
-            argumentOne.value = 'someArgument';
-            var ast = interactionModel.ast;
+            let [argument] = interactionModel.arguments;
+            argument.value = 'someArgument';
+            let ast = interactionModel.ast;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'self.element.method(\'someArgument\')'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                self.element.method('someArgument')
+            `));
         });
     });
 });

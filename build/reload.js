@@ -1,14 +1,9 @@
 'use strict';
 
-// Config:
-var config = require('./config.js');
-
 // Dependencies:
-var browserSync = require('browser-sync');
+import browserSync from 'browser-sync';
 
-module.exports = reload;
-
-function reload (reportTaskDone) {
+export default function reload (reportTaskDone) {
     browserSync({
         proxy: 'localhost:4000'
     });

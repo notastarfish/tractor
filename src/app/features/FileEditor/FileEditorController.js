@@ -9,7 +9,7 @@ export default class FileEditorController {
         confirmDialogService,
         persistentStateService,
         notifierService,
-        FileService,
+        fileService,
         FileModel,
         fileStructure,
         filePath
@@ -18,7 +18,7 @@ export default class FileEditorController {
         this.confirmDialogService = confirmDialogService;
         this.persistentStateService = persistentStateService;
         this.notifierService = notifierService;
-        this.fileService = FileService;
+        this.fileService = fileService;
         this.FileModel = FileModel;
         this.fileStructure = fileStructure;
 

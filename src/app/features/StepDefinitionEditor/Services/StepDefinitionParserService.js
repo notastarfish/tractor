@@ -34,7 +34,7 @@ class StepDefinitionParserService {
             let statements = module.expression.right.body.body;
 
             let parsers = [parseComponent, parseMock, parseStep];
-            tryParse(stepDefinition, statements, meta, parsers);
+            tryParse.call(this, stepDefinition, statements, meta, parsers);
 
             return stepDefinition;
         } catch (e) {
@@ -48,8 +48,8 @@ function tryParse (stepDefinition, statements, meta, parsers) {
     statements.map(statement => {
         let parsed = parsers.some(parser => {
             try {
-                return parser(stepDefinition, statement, meta);
-            } catch (e) {}
+                return parser.call(this, stepDefinition, statement, meta);
+            } catch (e) { }
         });
         if (!parsed) {
             throw new Error();
@@ -58,7 +58,7 @@ function tryParse (stepDefinition, statements, meta, parsers) {
 }
 
 function parseComponent (stepDefinition, statement, meta) {
-    let [declarator] = statement.declarations.reverse();
+    let [declarator] = statement.declarations.slice(-1);
     let name = declarator.init.callee.name;
     assert(name !== 'require');
     stepDefinition.addComponent(meta.components[stepDefinition.components.length].name);
@@ -86,4 +86,4 @@ export default angular.module('stepDefinitionParserService', [
     StepParserService.name,
     StepDefinitionModel.name
 ])
-.service('StepDefinitionParserService', StepDefinitionParserService);
+.service('stepDefinitionParserService', StepDefinitionParserService);

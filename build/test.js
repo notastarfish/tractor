@@ -1,21 +1,20 @@
 'use strict';
 
 // Utilities:
-var gulp = require('gulp');
-var karma = require('karma').server;
+import gulp from 'gulp';
 
 // Dependencies:
-var babel = require('babel/register');
-var istanbul = require('gulp-istanbul');
-var isparta = require('isparta');
-var mocha = require('gulp-mocha');
+import istanbul from 'gulp-istanbul';
+import { Instrumenter as isparta } from 'isparta';
+import karma from 'karma';
+import mocha from 'gulp-mocha';
 
-module.exports = {
-    server: server,
-    client: client
-};
+export default {
+    server,
+    client
+}
 
-function server (reportTaskDone) {
+function server (done) {
     gulp.src([
         'server/**/*.js',
         '!server/**/*.spec.js',
@@ -23,60 +22,85 @@ function server (reportTaskDone) {
         '!server/cli/init/base-file-sources/*'
     ])
     .pipe(istanbul({
-        instrumenter: isparta.Instrumenter,
+        instrumenter: isparta,
         includeUntested: true
     }))
     .pipe(istanbul.hookRequire())
-    .on('finish', function () {
-        gulp.src('server/**/*.js')
-        .pipe(mocha().on('error', function (error) {
+    .on('finish', () => {
+        gulp.src('server/**/*.spec.js')
+        .pipe(mocha().on('error', error => {
             console.log(error);
             this.destroy();
-            reportTaskDone();
+            done();
         }))
         .pipe(istanbul.writeReports({
             dir: './reports/server'
         }))
-        .on('end', reportTaskDone);
+        .on('end', done);
     });
 }
 
-function client (reportTaskDone) {
-    karma.start({
-        frameworks: ['browserify', 'mocha', 'sinon-chai', 'dirty-chai'],
+function client (done) {
+    let server = new karma.Server({
+        basePath: './src',
+
+        frameworks: ['jspm', 'mocha', 'sinon-chai', 'dirty-chai'],
         browsers: ['Chrome'],
 
-        port: 9876,
+        jspm: {
+            useBundles: true,
+            config: 'jspm.config.js',
+            loadFiles: [
+                'app/**/*.js',
+            ],
+            serveFiles: [
+                'app/**/*',
+                'jspm_packages/**/*'
+            ]
+        },
+
+        proxies: {
+            '/app': '/base/app',
+            '/jspm_packages': '/base/jspm_packages'
+        },
 
         reporters: ['progress', 'coverage'],
+
+        preprocessors: {
+            'app/**/!(*spec).js': ['babel', 'sourcemap', 'coverage']
+        },
+
+        babelPreprocessor: {
+            options: {
+                presets: ['es2015'],
+                sourceMap: 'inline'
+            },
+            sourceFileName: file => file.originalPath
+        },
+
         coverageReporter: {
+            instrumenters: { isparta },
+            instrumenter: {
+                'src/app/**/*.js': 'isparta'
+            },
+
             reporters: [{
                 type: 'lcov',
-                dir: 'reports/client'
+                dir: '../reports/client'
             }, {
-                type: 'text',
-                dir: 'reports/client'
+                type: 'text'
             }]
         },
 
         colors: true,
-        autoWatch: false,
-        singleRun: true,
-
-        files: [
-            'src/**/*.spec.js'
-        ],
-
-        preprocessors: {
-            'src/**/*.spec.js': ['browserify']
-        },
-
-        browserify: {
-            transform: ['brfs', 'browserify-shim', ['browserify-istanbul', {
-                ignore: ['**/*.spec.js', '**/*.mock.js', '**/Errors/*.js']
-            }]]
+        autoWatch: true,
+        singleRun: true
+    }, (exitCode) => {
+        if (exitCode) {
+            done('There are failing unit tests');
+        } else {
+            done();
         }
-    }, function () {
-        reportTaskDone();
     });
+    server.start();
 }

@@ -1,46 +1,49 @@
-/*global describe:true, beforeEach:true, it:true */
+/* global describe:true, beforeEach:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
-// Test Utilities:
-var chai = require('chai');
-var dirtyChai = require('dirty-chai');
+// Utilities:
+import chai from 'chai';
+import dirtyChai from 'dirty-chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 chai.use(dirtyChai);
 
 // Testing:
-require('./DragFileDirective');
+import './DragFileDirective';
 
-describe('DragFileDirective.js:', function() {
-    var $compile;
-    var $rootScope;
+describe('DragFileDirective.js:', () => {
+    let $compile;
+    let $rootScope;
 
-    beforeEach(function () {
-        angular.mock.module('Core');
+    beforeEach(() => {
+        angular.mock.module('tractor.dragFile');
 
-        angular.mock.inject(function (_$compile_, _$rootScope_) {
+        angular.mock.inject((_$compile_, _$rootScope_) => {
             $compile = _$compile_;
             $rootScope = _$rootScope_;
         });
     });
 
-    var compileDirective = function (template, scope) {
-        var directive = $compile(template)(scope);
+    const compileDirective = (template, scope) => {
+        let directive = $compile(template)(scope);
         scope.$digest();
         return directive;
     };
 
-    describe('Link function:', function () {
-        it('should add the "draggable" attribute to the element:', function () {
-            var scope = $rootScope.$new();
+    describe('Link function:', () => {
+        it('should add the "draggable" attribute to the element:', () => {
+            angular.element.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator];
+            let scope = $rootScope.$new();
             scope.model = {};
-            var directive = compileDirective('<div tractor-drag-file></div>', scope);
-            var $element = angular.element(directive);
+
+            let directive = compileDirective('<div tractor-drag-file></div>', scope);
+
+            let $element = angular.element(directive);
             expect($element.attr('draggable')).to.equal('true');
         });
     });

@@ -1,15 +1,15 @@
 'use strict';
 
 // Utilities:
-var gulp = require('gulp');
+import gulp from 'gulp';
 
 // Dependencies:
-var eslint = require('gulp-eslint');
+import eslint from 'gulp-eslint';
 
-module.exports = {
-    server: server,
-    client: client
-};
+export default {
+    server,
+    client
+}
 
 function server () {
     return gulp.src(['server/**/*.js'])
@@ -20,8 +20,7 @@ function server () {
 function client () {
     return gulp.src([
         'src/app/**/*.js',
-        '!src/app/**/*spec.js',
-        '!src/app/**/*mock.js'
+        'src/app/**/*spec.js'
     ])
     .pipe(eslint())
     .pipe(eslint.format());

@@ -1,9 +1,15 @@
 'use strict';
 
+// Constants:
+const DISCONNECT_MESSAGE = 'Tractor server disconnected...';
+
 // Dependencies:
 import angular from 'angular';
 import NotifierService from '../../../Core/Components/Notifier/NotifierService';
 import RealTimeService from '../../../Core/Services/RealTimeService';
+
+// Symbols:
+const isServerRunning = Symbol();
 
 class ServerStatusService {
     constructor (
@@ -15,8 +21,11 @@ class ServerStatusService {
         this.notifierService = notifierService;
         this.realTimeService = realTimeService;
 
-        this.isServerRunning = false;
-        this.monitorServerStatus();
+        this[isServerRunning] = false;
+    }
+
+    get isServerRunning () {
+        return this[isServerRunning];
     }
 
     monitorServerStatus () {
@@ -28,17 +37,17 @@ class ServerStatusService {
 }
 
 function onConnect () {
-    this.isServerRunning = true;
+    this[isServerRunning] = true;
     this.$rootScope.$apply();
 }
 
 function onDisconnect () {
-    this.isServerRunning = false;
+    this[isServerRunning] = false;
     this.$rootScope.$apply();
-    this.notifierService.error('Tractor server stalled...');
+    this.notifierService.error(DISCONNECT_MESSAGE);
 }
 
-export default angular.module('serverStatusService', [
+export default angular.module('tractor.serverStatusService', [
     NotifierService.name,
     RealTimeService.name
 ])

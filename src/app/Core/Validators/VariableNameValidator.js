@@ -25,30 +25,30 @@ class VariableNameValidator {
             variableValue: '=ngModel',
             variableNameModel: '='
         };
-    }
 
-    link ($scope, element, attrs, ngModelController) {
-        let destroy = this.$rootScope.$on(MODEL_CHANGE_EVENT, (event, changing) => {
-            if (ngModelController !== changing) {
-                ngModelController.$validate();
-            }
-        });
-        $scope.$on('$destroy', () => destroy());
-        $scope.$watch('variableValue', () => {
-            this.$rootScope.$broadcast(MODEL_CHANGE_EVENT, ngModelController);
-        });
+        this.link = ($scope, element, attrs, ngModelController) => {
+            let destroy = this.$rootScope.$on(MODEL_CHANGE_EVENT, (event, changing) => {
+                if (ngModelController !== changing) {
+                    ngModelController.$validate();
+                }
+            });
+            $scope.$on('$destroy', destroy);
+            $scope.$watch('variableValue', () => {
+                this.$rootScope.$broadcast(MODEL_CHANGE_EVENT, ngModelController);
+            });
 
-        ngModelController.$validators.variableNameUnique = value => {
-            let allVariableNames = $scope.variableNameModel.getAllVariableNames();
-            return !allVariableNames.includes(value);
-        };
+            ngModelController.$validators.variableNameUnique = value => {
+                let allVariableNames = $scope.variableNameModel.getAllVariableNames();
+                return !allVariableNames.includes(value);
+            };
 
-        ngModelController.$validators.variableNameValid = value => {
-            let variableName = $scope.$parent.isClass ? changecase.pascal(value) : changecase.camel(value);
-            if (variableName.length === 0) {
-                return false;
-            }
-            return this.validationService.validateVariableName(variableName);
+            ngModelController.$validators.variableNameValid = value => {
+                let variableName = $scope.$parent.isClass ? changecase.pascal(value) : changecase.camel(value);
+                if (variableName.length === 0) {
+                    return false;
+                }
+                return this.validationService.validateVariableName(variableName);
+            };
         };
     }
 }
@@ -56,4 +56,7 @@ class VariableNameValidator {
 export default angular.module('variableName', [
     ValidationService.name
 ])
-.directive('variableName', VariableNameValidator);
+.directive('variableName', (
+    $rootScope,
+    validationService
+) => new VariableNameValidator($rootScope, validationService));

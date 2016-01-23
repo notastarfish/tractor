@@ -1,20 +1,16 @@
 'use strict';
 
-// Styles:
-import 'styles/style.scss!';
-
 // Utilities:
-import isString from 'lodash.isstring';
 import Promise from 'bluebird';
 
 // Dependencies:
 import angular from 'angular';
-import 'angular-local-storage';
 import 'angular-messages';
 import 'angular-mocks';
 import 'angular-sanitize';
 import 'angular-sortable';
 import 'angular-ui-router';
+import 'babel/polyfill';
 
 import ActionDirective from './Core/Components/Action/ActionDirective';
 import CheckboxDirective from './Core/Components/Checkbox/CheckboxDirective';
@@ -59,12 +55,14 @@ import StepDefinitionEditorController from './features/StepDefinitionEditor/Step
 import StepDefinitionFileService from './features/StepDefinitionEditor/Services/StepDefinitionFileService';
 import stepDefinitionEditorTemplate from './features/StepDefinitionEditor/StepDefinitionEditor.html';
 
+NodeList.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator];
+angular.element.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator];
+
 // Application Init:
 let tractor = angular.module('tractor', [
     'ngMessages',
     'ui.router',
-    'ui.sortable',
-    'LocalStorageModule',
+    'as.sortable',
     ActionDirective.name,
     CheckboxDirective.name,
     ConfirmDialogDirective.name,
@@ -101,19 +99,17 @@ tractor.config((
     $stateProvider,
     $locationProvider,
     $urlMatcherFactoryProvider,
-    $urlRouterProvider,
-    localStorageServiceProvider
+    $urlRouterProvider
 ) => {
     $urlRouterProvider.otherwise('/');
     $locationProvider.html5Mode(true);
-    localStorageServiceProvider.setPrefix('tractor');
 
     $urlMatcherFactoryProvider.type('TractorFile', {
         encode (toEncode) {
             return toEncode && toEncode.name ? toEncode.name.replace(/\s/g, '+') : '';
         },
         decode (toDecode) {
-            return toDecode && isString(toDecode) ? { name: toDecode.replace(/\+/g, ' ') } : toDecode;
+            return toDecode && angular.isString(toDecode) ? { name: toDecode.replace(/\+/g, ' ') } : toDecode;
         },
         is (tractorFile) {
             return !tractorFile || tractorFile && tractorFile.name;
@@ -134,12 +130,12 @@ tractor.config((
         template: componentEditorTemplate,
         controller: 'ComponentEditorController as componentEditor',
         resolve: {
-            componentFileStructure (ComponentFileService) {
-                return ComponentFileService.getFileStructure();
+            componentFileStructure (componentFileService) {
+                return componentFileService.getFileStructure();
             },
-            componentPath ($stateParams, ComponentFileService) {
+            componentPath ($stateParams, componentFileService) {
                 let name = $stateParams.file && $stateParams.file.name;
-                return name ? ComponentFileService.getPath({ name }) : null;
+                return name ? componentFileService.getPath({ name }) : null;
             }
         }
     })
@@ -148,12 +144,12 @@ tractor.config((
         template: featureEditorTemplate,
         controller: 'FeatureEditorController as featureEditor',
         resolve: {
-            featureFileStructure (FeatureFileService) {
-                return FeatureFileService.getFileStructure();
+            featureFileStructure (featureFileService) {
+                return featureFileService.getFileStructure();
             },
-            featurePath ($stateParams, FeatureFileService) {
+            featurePath ($stateParams, featureFileService) {
                 let name = $stateParams.file && $stateParams.file.name;
-                return name ? FeatureFileService.getPath({ name }) : null;
+                return name ? featureFileService.getPath({ name }) : null;
             }
         }
     })
@@ -162,12 +158,12 @@ tractor.config((
         template: mockDataEditorTemplate,
         controller: 'MockDataEditorController as mockDataEditor',
         resolve: {
-            mockDataFileStructure (MockDataFileService) {
-                return MockDataFileService.getFileStructure();
+            mockDataFileStructure (mockDataFileService) {
+                return mockDataFileService.getFileStructure();
             },
-            mockDataPath ($stateParams, MockDataFileService) {
+            mockDataPath ($stateParams, mockDataFileService) {
                 let name = $stateParams.file && $stateParams.file.name;
-                return name ? MockDataFileService.getPath({ name }) : null;
+                return name ? mockDataFileService.getPath({ name }) : null;
             }
         }
     })
@@ -176,12 +172,12 @@ tractor.config((
         template: stepDefinitionEditorTemplate,
         controller: 'StepDefinitionEditorController as stepDefinitionEditor',
         resolve: {
-            stepDefinitionFileStructure (StepDefinitionFileService) {
-                return StepDefinitionFileService.getFileStructure();
+            stepDefinitionFileStructure (stepDefinitionFileService) {
+                return stepDefinitionFileService.getFileStructure();
             },
-            stepDefinitionPath ($stateParams, StepDefinitionFileService) {
+            stepDefinitionPath ($stateParams, stepDefinitionFileService) {
                 let name = $stateParams.file && $stateParams.file.name;
-                return name ? StepDefinitionFileService.getPath({ name }) : null;
+                return name ? stepDefinitionFileService.getPath({ name }) : null;
             }
         }
     });
@@ -197,7 +193,5 @@ let $http = angular.injector(['ng']).get('$http');
 $http.get('/config')
 .then((response) => {
     tractor.constant('config', response.data);
-    angular.bootstrap(document.body, ['tractor'], {
-        strictDi: true
-    });
+    angular.bootstrap(document.body, ['tractor']);
 });

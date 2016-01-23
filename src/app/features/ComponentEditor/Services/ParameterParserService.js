@@ -12,11 +12,11 @@ class ParameterParserService {
     }
 
     parse (action) {
-        return new ParameterModel(action);
+        return new this.ParameterModel(action);
     }
 }
 
-export default angular.module('parameterParserService', [
+export default angular.module('tractor.parameterParserService', [
     ParameterModel.name
 ])
 .service('parameterParserService', ParameterParserService);

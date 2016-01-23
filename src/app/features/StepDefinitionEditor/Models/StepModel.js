@@ -44,10 +44,6 @@ function createStepModelConstructor (
             return this[tasks];
         }
 
-        get ast () {
-            return toAST.call(this);
-        }
-
         addExpectation () {
             this.expectations.push(new ExpectationModel(this));
         }
@@ -73,9 +69,13 @@ function createStepModelConstructor (
         }
 
         removeMock (toRemove) {
-            this.mocks.splice(this.mocks(mock => {
+            this.mocks.splice(this.mocks.findIndex(mock => {
                 return mock === toRemove;
             }), 1);
+        }
+
+        get ast () {
+            return toAST.call(this);
         }
     }
 
@@ -96,7 +96,7 @@ function createStepModelConstructor (
             template += ';';
             template += 'Promise.resolve(tasks).then(done).catch(done.fail);';
         } else if (expectations.length) {
-            template += 'Promise.all([%= expectations %]).spread(function () {  done(); }).catch(done.fail);';
+            template += 'Promise.all([%= expectations %]).spread(function () { done(); }).catch(done.fail);';
         } else {
             template += 'done.pending();';
         }
@@ -108,7 +108,7 @@ function createStepModelConstructor (
     }
 }
 
-export default angular.module('stepModel', [
+export default angular.module('tractor.stepModel', [
     ASTCreatorService.name,
     ExpectationModel.name,
     MockModel.name,

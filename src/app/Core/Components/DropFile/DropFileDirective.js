@@ -11,15 +11,15 @@ class DropFileDirective {
             onDrop: '&',
             dropDirectory: '='
         }
-    }
 
-    link ($scope, $element) {
-        let [element] = $element;
+        this.link = ($scope, $element) => {
+            let [element] = $element;
 
-        element.addEventListener('dragover', dragover);
-        element.addEventListener('dragenter', dragenter);
-        element.addEventListener('dragleave', dragleave);
-        element.addEventListener('drop', event => drop($scope, event));
+            element.addEventListener('dragover', dragover);
+            element.addEventListener('dragenter', dragenter);
+            element.addEventListener('dragleave', dragleave);
+            element.addEventListener('drop', drop.bind(element, $scope));
+        };
     }
 }
 
@@ -58,5 +58,5 @@ function drop ($scope, event) {
     return false;
 }
 
-export default angular.module('tractorDropFile', [])
-.directive('tractorDropFile', DropFileDirective);
+export default angular.module('tractor.dropFile', [])
+.directive('tractorDropFile', () => new DropFileDirective());

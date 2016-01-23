@@ -20,4 +20,4 @@ export default angular.module('stepDefinitionFileService', [
     FileStructureService.name,
     StepDefinitionParserService.name
 ])
-.service('StepDefinitionFileService', StepDefinitionFileService);
+.service('stepDefinitionFileService', StepDefinitionFileService);

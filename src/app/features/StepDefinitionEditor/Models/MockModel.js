@@ -17,8 +17,8 @@ function createMockModelConstructor (
             let [action] = this.actions;
             this.action = action;
 
-            let [instance] = this.step.stepDefinition.mockDataInstances;
-            this.data = instance;
+            let [mockDataInstance] = this.step.stepDefinition.mockDataInstances;
+            this.data = mockDataInstance;
 
             this.passThrough = false;
             this.url = '';
@@ -49,7 +49,7 @@ function createMockModelConstructor (
     }
 }
 
-export default angular.module('mockModel', [
+export default angular.module('tractor.mockModel', [
     ASTCreatorService.name
 ])
 .factory('MockModel', createMockModelConstructor);

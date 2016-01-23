@@ -11,19 +11,29 @@ class MockDataParserService {
 
     parse (mockDataFile) {
         try {
-            let mockDataModel = new this.MockDataModel(mockDataFile.content, {
+            let { content, path } = mockDataFile;
+            let mockDataModel = new this.MockDataModel(content, {
                 isSaved: true,
-                path: mockDataFile.path
+                path
             });
-            mockDataModel.name = mockDataFile.name;
+
+            parseMockData(mockDataModel, mockDataFile);
+
             return mockDataModel;
         } catch (e) {
-            return new MockDataModel();
+            console.warn('Invalid mock data:', mockDataFile.content);
+            return null;
         }
     }
 }
 
-export default angular.module('mockDataParserService', [
+function parseMockData (mockDataModel, mockDataFile) {
+    let { name } = mockDataFile;
+    mockDataModel.name = name;
+    assert(mockDataModel.name);
+}
+
+export default angular.module('tractor.mockDataParserService', [
     MockDataModel.name
 ])
-.service('MockDataParserService', MockDataParserService);
+.service('mockDataParserService', MockDataParserService);

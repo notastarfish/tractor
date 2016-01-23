@@ -24,5 +24,5 @@ class RealTimeService {
     }
 }
 
-export default angular.module('realTimeService', [])
+export default angular.module('tractor.realTimeService', [])
 .service('realTimeService', RealTimeService);

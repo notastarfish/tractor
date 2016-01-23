@@ -19,10 +19,10 @@ class TaskParserService {
             this.parseNextTask(step, ast);
 
             let parsers = [parseFirstTask, parseSubsequentTask];
-            let taskCallExpression = parseTaskCallExpression(ast, parsers);
+            let taskCallExpression = parseTaskCallExpression.call(this, ast, parsers);
 
             try {
-                return parseTask(step, taskCallExpression);
+                return parseTask.call(this, step, taskCallExpression);
             } catch (e) {}
 
             throw new Error();
@@ -44,8 +44,8 @@ function parseTaskCallExpression (ast, parsers) {
     let taskCallExpression = null;
     parsers.filter(parser => {
         try {
-            taskCallExpression = parser(ast);
-        } catch (e) {}
+            taskCallExpression = parser.call(this, ast);
+        } catch (e) { }
     });
     if (!taskCallExpression) {
         throw new Error();
@@ -65,7 +65,7 @@ function parseSubsequentTask (ast) {
 }
 
 function parseTask (step, taskCallExpression) {
-    let task = new TaskModel(step);
+    let task = new this.TaskModel(step);
     task.component = task.step.stepDefinition.componentInstances.find(componentInstance => {
         return taskCallExpression.callee.object.name === componentInstance.variableName;
     });
@@ -82,4 +82,4 @@ function parseTask (step, taskCallExpression) {
 export default angular.module('taskParserService', [
     TaskModel.name
 ])
-.service('TaskParserService', TaskParserService);
+.service('taskParserService', TaskParserService);

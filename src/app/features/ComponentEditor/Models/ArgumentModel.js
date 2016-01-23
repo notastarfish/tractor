@@ -1,20 +1,18 @@
 'use strict';
 
-// Utilities:
-import isUndefined from 'lodash.isundefined';
-
 // Dependencies:
 import angular from 'angular';
 import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
 import StringToLiteralService from '../../../Core/Services/StringToLiteralService';
 
+// Symbols;
+const argument = Symbol();
+const method = Symbol();
+
 function createArgumentModelConstructor (
     astCreatorService,
     stringToLiteralService
 ) {
-    const argument = Symbol();
-    const method = Symbol();
-
     return class ArgumentModel {
         constructor (_method, _argument) {
             this[argument] = _argument;
@@ -53,7 +51,7 @@ function createArgumentModelConstructor (
         let parameter = findParameter.call(this);
         let result = findResult.call(this);
 
-        if (!isUndefined(literal) && literal !== this.value) {
+        if (!angular.isUndefined(literal) && literal !== this.value) {
             return astCreatorService.literal(literal);
         } else if (parameter) {
             return astCreatorService.identifier(parameter.variableName);
@@ -80,7 +78,7 @@ function createArgumentModelConstructor (
     }
 }
 
-export default angular.module('argumentModel', [
+export default angular.module('tractor.argumentModel', [
     ASTCreatorService.name,
     StringToLiteralService.name
 ])

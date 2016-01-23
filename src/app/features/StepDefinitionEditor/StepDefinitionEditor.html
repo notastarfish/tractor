@@ -94,7 +94,7 @@
                     </tractor-action>
 
                     <tractor-text-input
-                        form="file-editor"
+                        form="stepDefinitionEditor.fileEditor"
                         label="URL"
                         model="mock"
                         example="http://example.com">
@@ -150,7 +150,7 @@
                     </tractor-select>
                     <div ng-repeat="argument in task.arguments">
                         <tractor-literal-input
-                            form="file-editor"
+                            form="stepDefinitionEditor.fileEditor"
                             name="argument.name"
                             model="argument"
                             required>
@@ -196,7 +196,7 @@
                     </tractor-select>
                     <div ng-repeat="argument in expectation.arguments">
                         <tractor-literal-input
-                            form="file-editor"
+                            form="stepDefinitionEditor.fileEditor"
                             name="argument.name"
                             model="argument"
                             type="argument.type">

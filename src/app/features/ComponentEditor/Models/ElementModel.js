@@ -2,7 +2,6 @@
 
 // Utilities:
 import changecase from 'change-case';
-import isNumber from 'lodash.isnumber';
 
 // Dependencies:
 import angular from 'angular';
@@ -11,19 +10,23 @@ import ElementMethods from './ElementMethods';
 import FilterModel from './FilterModel';
 import StringToLiteralService from '../../../Core/Services/StringToLiteralService';
 
+// Symbols:
+const component = Symbol();
+const filters = Symbol();
+const sortableFilters = Symbol();
+
 function createElementModelConstructor (
     astCreatorService,
     FilterModel,
     stringToLiteralService
 ) {
-    const component = Symbol();
-
     return class ElementModel {
         constructor (_component) {
             this[component] = _component;
+            this[filters] = [];
+            this[sortableFilters] = [];
 
             this.name = '';
-            this.filters = [];
             this.methods = [
                 ElementMethods.CLICK,
                 ElementMethods.SEND_KEYS,
@@ -35,17 +38,24 @@ function createElementModelConstructor (
                 ElementMethods.IS_DISPLAYED,
                 ElementMethods.GET_OUTER_HTML,
                 ElementMethods.GET_INNER_HTML
-            ]
-            this.sortableFilters = [];
+            ];
         }
 
         get component () {
             return this[component];
         }
 
+        get filters () {
+            return this[filters];
+        }
+
         get selector () {
             let [filter] = this.filters;
             return filter;
+        }
+
+        get sortableFilters () {
+            return this[sortableFilters];
         }
 
         get variableName () {
@@ -130,7 +140,7 @@ function createElementModelConstructor (
 
     function filterAfterGroupFilter (filter, filterTemplate) {
         let locatorLiteral = stringToLiteralService.toLiteral(filter.locator);
-        if (isNumber(locatorLiteral)) {
+        if (angular.isNumber(locatorLiteral)) {
             return `.get(${filterTemplate})`;
         } else {
             return `.filter(${filterTemplate}).get(0)`;
@@ -146,7 +156,7 @@ function createElementModelConstructor (
     }
 }
 
-export default angular.module('elementModel', [
+export default angular.module('tractor.elementModel', [
     ASTCreatorService.name,
     FilterModel.name,
     StringToLiteralService.name

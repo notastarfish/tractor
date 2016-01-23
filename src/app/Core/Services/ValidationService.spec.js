@@ -1,60 +1,40 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
-// Test Utilities:
-var chai = require('chai');
-var sinon = require('sinon');
+// Utilities:
+import chai from 'chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 
 // Testing:
-require('./ValidationService');
-var validationService;
+import './ValidationService';
+let validationService;
 
-// Mocks:
-var MockHttpResponseInterceptor = require('./HttpResponseInterceptor.mock');
+describe('ValidationService.js:', () => {
+    beforeEach(() => {
+        angular.mock.module('tractor.validationService');
 
-describe('ValidationService.js:', function () {
-    var $httpBackend;
-    var httpResponseInterceptor;
-
-    beforeEach(function () {
-        angular.mock.module('Core');
-
-        angular.mock.module(function ($provide, $httpProvider) {
-            httpResponseInterceptor = new MockHttpResponseInterceptor();
-            $provide.factory('httpResponseInterceptor', function () {
-                return httpResponseInterceptor;
-            });
-
-            $httpProvider.interceptors.push('httpResponseInterceptor');
-        });
-
-        angular.mock.inject(function (_$httpBackend_, _validationService_) {
-            $httpBackend = _$httpBackend_;
+        angular.mock.inject(_validationService_ => {
             validationService = _validationService_;
         });
     });
 
-    describe('ValidationService.validateVariableName:', function () {
-        it('should send a varible name off to the server for validation:', function (done) {
-            sinon.stub(httpResponseInterceptor, 'response').returns('variable');
+    describe('ValidationService.validateVariableName:', () => {
+        it('should return the variable name if it valid', () => {
+            let variableName = validationService.validateVariableName('variable')
 
-            $httpBackend.whenGET('/variable-name-valid?variableName=variable').respond({});
+            expect(variableName).to.equal('variable');
+        });
 
-            validationService.validateVariableName('variable')
-            .then(function (variableName) {
-                expect(variableName).to.equal('variable');
-                done();
-            })
-            .catch(done.fail);
+        it('should return false if a variable name is not valid', () => {
+            let variableName = validationService.validateVariableName('1')
 
-            $httpBackend.flush();
+            expect(variableName).to.equal(false);
         });
     });
 });

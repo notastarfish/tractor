@@ -25,7 +25,7 @@ class MockDataEditorController extends FileEditorController {
             confirmDialogService,
             persistentStateService,
             notifierService,
-            MockDataFileService,
+            mockDataFileService,
             MockDataModel,
             mockDataFileStructure,
             mockDataPath

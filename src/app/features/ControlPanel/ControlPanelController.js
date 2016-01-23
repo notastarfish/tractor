@@ -5,6 +5,10 @@ import angular from 'angular';
 import RunnerService from './Services/RunnerService';
 import ServerStatusService from './Services/ServerStatusService';
 
+// Symbols:
+const environments = Symbol();
+const environment = Symbol();
+
 class ControlPanelController {
     constructor (
         runnerService,
@@ -13,9 +17,23 @@ class ControlPanelController {
     ) {
         this.runnerService = runnerService;
         this.serverStatusService = serverStatusService;
-        this.environments = config.environments;
-        let [environment] = this.environments
-        this.environment = environment;
+        this[environments] = config.environments;
+        let [environment] = this.environments;
+        this[environment] = environment;
+
+        this.serverStatusService.monitorServerStatus();
+    }
+
+    get environments () {
+        return this[environments];
+    }
+
+    get environment () {
+        return this[environment];
+    }
+
+    get isServerRunning () {
+        return this.serverStatusService.isServerRunning;
     }
 
     runProtractor () {
@@ -23,14 +41,10 @@ class ControlPanelController {
             baseUrl: this.environment
         });
     }
-
-    isServerRunning () {
-        return this.serverStatusService.isServerRunning();
-    }
 }
 
 export default angular.module('controlPanelController', [
     RunnerService.name,
     ServerStatusService.name
 ])
-.controller('ControlPanelController', ControlPanelController);
+.controller('ControlPanelController', ControlPanelController)

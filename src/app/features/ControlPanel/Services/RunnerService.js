@@ -28,7 +28,7 @@ function notify (data) {
     this.notifierService[type](message);
 }
 
-export default angular.module('runnerService', [
+export default angular.module('tractor.runnerService', [
     NotifierService.name,
     RealTimeService.name
 ])

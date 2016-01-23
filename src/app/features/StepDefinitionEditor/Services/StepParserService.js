@@ -31,10 +31,10 @@ class StepParserService {
             step.type = parseType(step, stepCallExpression);
             step.regex = parseRegex(step, stepCallExpression);
 
-            let [stepFunction] = ast.expression.arguments.reverse();
+            let [stepFunction] = ast.expression.arguments.slice(-1);
             let statements = stepFunction.body.body;
             let parsers = [parseMock, parseTask, parseExpectation, parsePending, parseMockDone, parseTaskDone];
-            tryParse(step, statements, parsers);
+            tryParse.call(this, step, statements, parsers);
 
             return step;
         } catch (e) {
@@ -61,7 +61,7 @@ function tryParse (step, statements, parsers) {
     statements.map(statement => {
         let parsed = parsers.some(parser => {
             try {
-                return parser(step, statement);
+                return parser.call(this, step, statement);
             } catch (e) {}
         });
         if (!parsed) {
@@ -74,7 +74,7 @@ function parseMock (step, statement) {
     let httpBackendOnloadMemberExpression = statement.expression.callee.object.callee;
     assert(httpBackendOnloadMemberExpression.object.name === 'httpBackend');
     assert(httpBackendOnloadMemberExpression.property.name.indexOf('when') === 0);
-    let mock = MockParserService.parse(step, statement);
+    let mock = this.mockParserService.parse(step, statement);
     assert(mock);
     step.mocks.push(mock);
     return true;
@@ -83,7 +83,7 @@ function parseMock (step, statement) {
 function parseTask (step, statement) {
     let [tasksDeclaration] = statement.declarations;
     assert(tasksDeclaration.id.name === 'tasks');
-    TaskParserService.parse(step, tasksDeclaration.init);
+    this.taskParserService.parse(step, tasksDeclaration.init);
     return true;
 }
 
@@ -91,7 +91,7 @@ function parseExpectation (step, statement) {
     let [argument] = statement.expression.callee.object.callee.object.arguments
     argument.elements.forEach(element => {
         assert(!(element.name && element.name === 'tasks'));
-        let expectation = ExpectationParserService.parse(step, element);
+        let expectation = this.expectationParserService.parse(step, element);
         assert(expectation);
         step.expectations.push(expectation);
     });
@@ -121,4 +121,4 @@ export default angular.module('stepParserService', [
     StepModel.name,
     TaskParserService.name
 ])
-.service('StepParserService', StepParserService);
+.service('stepParserService', StepParserService);

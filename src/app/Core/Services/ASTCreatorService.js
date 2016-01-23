@@ -37,14 +37,14 @@ class ASTCreatorService {
     }
 
     literal (value) {
-        let literal = {
+        let lit = {
             type: 'Literal',
             value
         };
         if (isRegExp(value)) {
-            literal.raw = `${value}`;
+            lit.raw = `${value}`;
         }
-        return literal;
+        return lit;
     }
 }
 
@@ -63,5 +63,5 @@ function blockComment (value) {
     };
 }
 
-export default angular.module('astCreatorService', [])
+export default angular.module('tractor.astCreatorService', [])
 .service('astCreatorService', ASTCreatorService);

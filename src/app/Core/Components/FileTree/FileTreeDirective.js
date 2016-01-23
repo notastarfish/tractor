@@ -1,8 +1,5 @@
 'use strict';
 
-// Utilities:
-import isUndefined from 'lodash.isundefined';
-
 // Dependencies:
 import angular from 'angular';
 import FileTreeController from './FileTreeController';
@@ -22,20 +19,20 @@ class FileTreeDirective {
         this.controller = 'FileTreeController';
         this.controllerAs = 'fileTree';
         this.bindToController = true;
-    }
 
-    link ($scope) {
-        if (isUndefined($scope.fileTree.model)) {
-            throw new Error('The "tractor-file-tree" directive requires a "model" attribute.');
-        }
+        this.link = $scope => {
+            if (angular.isUndefined($scope.fileTree.model)) {
+                throw new Error('The <tractor-file-tree> directive requires a "model" attribute.');
+            }
 
-        if (isUndefined($scope.fileTree.type)) {
-            throw new Error('The "tractor-file-tree" directive requires a "type" attribute.');
-        }
+            if (angular.isUndefined($scope.fileTree.type)) {
+                throw new Error('The <tractor-file-tree> directive requires a "type" attribute.');
+            }
+        };
     }
 }
 
-export default angular.module('tractorFileTree', [
+export default angular.module('tractor.fileTree', [
     FileTreeController.name
 ])
-.directive('tractorFileTree', FileTreeDirective);
+.directive('tractorFileTree', () => new FileTreeDirective());

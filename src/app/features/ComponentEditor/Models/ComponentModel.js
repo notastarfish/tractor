@@ -11,24 +11,25 @@ import ASTCreatorService from '../../../Core/Services/ASTCreatorService';
 import BrowserModel from './BrowserModel';
 import ElementModel from './ElementModel';
 
+// Symbols:
+const actions = Symbol();
+const browser = Symbol();
+const domElements = Symbol();
+const elements = Symbol();
+const options = Symbol();
+
 function createComponentModelConstructor (
     astCreatorService,
     BrowserModel,
     ElementModel,
     ActionModel
 ) {
-    const actions = Symbol();
-    const browser = Symbol();
-    const domElements = Symbol();
-    const elements = Symbol();
-    const options = Symbol();
-
     return class ComponentModel {
         constructor (_options = {}) {
             this[actions] = [];
             this[browser] = new BrowserModel();
             this[domElements] = [];
-            this[elements] = [browser];
+            this[elements] = [this[browser]];
             this[options] = _options;
 
             this.name = '';
@@ -39,7 +40,7 @@ function createComponentModelConstructor (
         }
 
         get path () {
-            return options.path;
+            return this[options].path;
         }
 
         get actions () {
@@ -136,7 +137,7 @@ function createComponentModelConstructor (
     }
 }
 
-export default angular.module('componentModel', [
+export default angular.module('tractor.componentModel', [
     ActionModel.name,
     ASTCreatorService.name,
     BrowserModel.name,

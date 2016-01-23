@@ -16,8 +16,8 @@ class MockDataFileService extends FileService {
     }
 }
 
-export default angular.module('mockDataFileService', [
+export default angular.module('tractor.mockDataFileService', [
     FileStructureService.name,
     MockDataParserService.name
 ])
-.service('MockDataFileService', MockDataFileService);
+.service('mockDataFileService', MockDataFileService);

@@ -1,21 +1,21 @@
 'use strict';
 
-// Utilities:
-import isUndefined from 'lodash.isundefined';
-
 // Dependencies:
 import angular from 'angular';
 import StringToLiteralService from '../../../Core/Services/StringToLiteralService';
+
+// Symbols:
+const scenario = Symbol();
+const values = Symbol();
 
 function createExampleModelConstructor (
     stringToLiteralService,
     FeatureIndent
 ) {
-    const scenario = Symbol();
-
     return class ExampleModel {
         constructor (_scenario) {
             this[scenario] = _scenario;
+            this[values] = {};
         }
 
         get scenario () {
@@ -23,13 +23,12 @@ function createExampleModelConstructor (
         }
 
         get values () {
-            let values = {};
             this.scenario.exampleVariables.forEach(exampleVariable => {
-                values[exampleVariable] = values[exampleVariable] || {
+                this[values][exampleVariable] = this[values][exampleVariable] || {
                     value: ''
                 };
             });
-            return values;
+            return this[values];
         }
 
         get feature () {
@@ -41,13 +40,13 @@ function createExampleModelConstructor (
         let values = this.scenario.exampleVariables.map(variable => {
             let value = this.values[variable].value;
             let literal = stringToLiteralService.toLiteral(value);
-            return isUndefined(literal) ? `"${value}"` : literal;
+            return angular.isUndefined(literal) ? `"${value}"` : literal;
         }).join(' | ');
         return `${FeatureIndent}${FeatureIndent}${FeatureIndent}| ${values} |`;
     }
 }
 
-export default angular.module('exampleModel', [
+export default angular.module('tractor.exampleModel', [
     StringToLiteralService.name
 ])
 .factory('ExampleModel', createExampleModelConstructor);

@@ -2,7 +2,6 @@
 
 // Utilities:
 import assert from 'assert';
-import isNumber from 'lodash.isnumber';
 
 // Dependencies:
 import angular from 'angular';
@@ -15,68 +14,68 @@ class FilterParserService {
         this.FilterModel = FilterModel;
     }
 
-    parse (element, astObject) {
-        let filter = new this.FilterModel(element);
-
-        let notModelBindingCSSOptionsRepeater = false;
-        let notText = false;
-        let notAllIndex = false;
-        let notAllString = false;
-
+    parse (element, ast) {
         try {
-            assert(astObject.callee.property.name !== 'cssContainingText');
-            let [locatorLiteral] = astObject.arguments;
-            filter.locator = locatorLiteral.value;
-            filter.type = astObject.callee.property.name;
+            let filter = new this.FilterModel(element);
+
+            let parsers = [parseFilter, parseCSSContainingTextFilter, parseOptionsRepeaterIndexFilter, parseOptionsRepeaterTextFilter];
+            tryParse(filter, ast, parsers);
+
+            return filter;
         } catch (e) {
-            notModelBindingCSSOptionsRepeater = true;
+            console.warn('Invalid filter:', ast);
+            return null;
         }
-
-        try {
-            if (notModelBindingCSSOptionsRepeater) {
-                assert(astObject.callee.property.name === 'cssContainingText');
-                let [allSelectorLiteral] = astObject.arguments;
-                assert(allSelectorLiteral.value === '*');
-                let locatorLiteral = astObject.arguments[1];
-                filter.locator = locatorLiteral.value;
-                filter.type = 'text';
-            }
-        } catch (e) {
-            notText = true;
-        }
-
-        try {
-            if (notText) {
-                assert(isNumber(astObject.value));
-                filter.locator = String(astObject.value);
-                filter.type = 'text';
-            }
-        } catch (e) {
-            notAllIndex = true;
-        }
-
-        try {
-            if (notAllIndex) {
-                let [getTextThenReturnStatement] = astObject.body.body;
-                let [checkFoundTextFunctionExpression] = getTextThenReturnStatement.argument.arguments;
-                let [checkFoundTextReturnStatement] = checkFoundTextFunctionExpression.body.body;
-                let [locatorLiteral] = checkFoundTextReturnStatement.argument.left.arguments;
-                filter.locator = locatorLiteral.value;
-                filter.type = 'text';
-            }
-        } catch (e) {
-            notAllString = true;
-        }
-
-        if (notModelBindingCSSOptionsRepeater && notText && notAllIndex && notAllString) {
-            console.log(astObject);
-        }
-
-        return filter;
     }
 }
 
-export default angular.module('filterParserService', [
+function tryParse (filter, ast, parsers) {
+    let parsed = parsers.some(parser => {
+        try {
+            return parser(filter, ast);
+        } catch (e) {}
+    });
+    if (!parsed) {
+        throw new Error();
+    }
+}
+
+function parseFilter (filter, ast) {
+    assert(ast.callee.property.name !== 'cssContainingText');
+    let [locatorLiteral] = ast.arguments;
+    filter.locator = locatorLiteral.value;
+    filter.type = ast.callee.property.name;
+    return true;
+}
+
+function parseCSSContainingTextFilter (filter, ast) {
+    assert(ast.callee.property.name === 'cssContainingText');
+    let [allSelectorLiteral] = ast.arguments;
+    assert(allSelectorLiteral.value === '*');
+    let locatorLiteral = ast.arguments[1];
+    filter.locator = locatorLiteral.value;
+    filter.type = 'text';
+    return true;
+}
+
+function parseOptionsRepeaterIndexFilter (filter, ast) {
+    assert(angular.isNumber(ast.value));
+    filter.locator = String(ast.value);
+    filter.type = 'text';
+    return true;
+}
+
+function parseOptionsRepeaterTextFilter (filter, ast) {
+    let [getTextThenReturnStatement] = ast.body.body;
+    let [checkFoundTextFunctionExpression] = getTextThenReturnStatement.argument.arguments;
+    let [checkFoundTextReturnStatement] = checkFoundTextFunctionExpression.body.body;
+    let [locatorLiteral] = checkFoundTextReturnStatement.argument.left.arguments;
+    filter.locator = locatorLiteral.value;
+    filter.type = 'text';
+    return true;
+}
+
+export default angular.module('tractor.filterParserService', [
     FilterModel.name
 ])
 .service('filterParserService', FilterParserService);

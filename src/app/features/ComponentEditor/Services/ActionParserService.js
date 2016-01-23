@@ -20,48 +20,60 @@ class ActionParserService {
         this.parameterParserService = parameterParserService;
     }
 
-    parse (component, astObject, meta) {
-        let action = new this.ActionModel(component);
+    parse (component, ast, meta) {
+        try {
+            let action = new this.ActionModel(component);
 
-        let actionFunctionExpression = astObject.expression.right;
-        let actionBody = actionFunctionExpression.body.body;
+            let { params } = ast.expression.right;
+            parseParameters.call(this, action, params, meta);
 
-        actionFunctionExpression.params.forEach(param => {
-            let parameter = this.parameterParserService.parse(action);
-            assert(parameter);
-            parameter.name = meta.parameters[action.parameters.length].name;
-            action.parameters.push(parameter);
-        });
+            let statements = ast.expression.right.body.body;
+            let parsers = [parseSelfThis, parseInteraction];
+            tryParse.call(this, action, statements, parsers);
 
-        actionBody.forEach((statement, index) => {
-            let notSelf = false;
-            let notInteraction = false;
-
-            try {
-                let [selfVariableDeclarator] = statement.declarations;
-                assert(selfVariableDeclarator.id.name === 'self');
-            } catch (e) {
-                notSelf = true;
-            }
-
-            try {
-                if (notSelf) {
-                    this.interactionParserService.parse(action, statement);
-                }
-            } catch (e) {
-                notInteraction = true;
-            }
-
-            if (notSelf && notInteraction) {
-                console.log(statement, index);
-            }
-        });
-
-        return action;
+            return action;
+        } catch (e) {
+            console.warn('Invalid action:', ast);
+            return null;
+        }
     }
 }
 
-export default angular.module('actionParserService', [
+function parseParameters (action, params, meta) {
+    params.forEach(param => {
+        let parameter = this.parameterParserService.parse(action);
+        assert(parameter);
+        parameter.name = meta.parameters[action.parameters.length].name;
+        action.addParameter(parameter);
+    });
+}
+
+function tryParse (action, statements, parsers) {
+    statements.forEach(statement => {
+        let parsed = parsers.some(parser => {
+            try {
+                return parser.call(this, action, statement);
+            } catch (e) {}
+        });
+        if (!parsed) {
+            throw new Error();
+        }
+    });
+}
+
+function parseSelfThis (action, statement) {
+    let [selfVariableDeclarator] = statement.declarations;
+    assert(selfVariableDeclarator.id.name === 'self');
+    assert(selfVariableDeclarator.init.type === 'ThisExpression');
+    return true;
+}
+
+function parseInteraction (action, statement) {
+    this.interactionParserService.parse(action, statement);
+    return true;
+}
+
+export default angular.module('tractor.actionParserService', [
     ActionModel.name,
     InteractionParserService.name,
     ParameterParserService.name

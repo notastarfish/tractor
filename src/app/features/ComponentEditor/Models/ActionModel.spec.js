@@ -1,53 +1,50 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
 // Utilities:
-var _ = require('lodash');
-
-// Test Utilities:
-var chai = require('chai');
-var sinon = require('sinon');
-var sinonChai = require('sinon-chai');
+import chai from 'chai';
+import dedent from 'dedent';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 chai.use(sinonChai);
 
+// Dependencies:
+import escodegen from 'escodegen';
+
 // Testing:
-require('./ActionModel');
-var ActionModel;
+import './ActionModel';
+let ActionModel;
 
-// Mocks:
-var MockComponentModel = require('./ComponentModel.mock.js');
+describe('ActionModel.js:', () => {
+    let ParameterModel;
+    let InteractionModel;
 
-describe('ActionModel.js:', function () {
-    var ParameterModel;
-    var InteractionModel;
+    beforeEach(() => {
+        angular.mock.module('tractor.actionModel');
 
-    beforeEach(function () {
-        angular.mock.module('ComponentEditor');
-
-        angular.mock.inject(function (_ActionModel_, _ParameterModel_, _InteractionModel_) {
+        angular.mock.inject((_ActionModel_, _ParameterModel_, _InteractionModel_) => {
             ActionModel = _ActionModel_;
             ParameterModel = _ParameterModel_;
             InteractionModel = _InteractionModel_;
         });
     });
 
-    describe('ActionModel constructor:', function () {
-        it('should create a new `ActionModel`:', function () {
-            var actionModel = new ActionModel();
+    describe('ActionModel constructor:', () => {
+        it('should create a new `ActionModel`:', () => {
+            let actionModel = new ActionModel();
             expect(actionModel).to.be.an.instanceof(ActionModel);
         });
 
-        it('should have default properties:', function () {
-            var component = {};
-
-            var actionModel = new ActionModel(component);
+        it('should have default properties:', () => {
+            let component = {};
+            let actionModel = new ActionModel(component);
 
             expect(actionModel.component).to.equal(component);
             expect(actionModel.interactions.length).to.equal(0);
@@ -60,374 +57,355 @@ describe('ActionModel.js:', function () {
         });
     });
 
-    describe('ActionModel.variableName:', function () {
-        it('should turn the full name of the Action into a JS variable:', function () {
-            var actionModel = new ActionModel();
+    describe('ActionModel.variableName:', () => {
+        it('should turn the full name of the Action into a JS variable:', () => {
+            let actionModel = new ActionModel();
 
             actionModel.name = 'A long name that describes the action.';
             expect(actionModel.variableName).to.equal('aLongNameThatDescribesTheAction');
         });
     });
 
-    describe('ActionModel.meta:', function () {
-        it('should contain the full name of the Action:', function () {
-            var actionModel = new ActionModel();
+    describe('ActionModel.meta:', () => {
+        it('should contain the full name of the Action:', () => {
+            let actionModel = new ActionModel();
 
             actionModel.name = 'A long name that describes the Action.';
             expect(actionModel.meta.name).to.equal('A long name that describes the Action.');
         });
 
-        it('should contain the meta data for the Parameters of the Action:', function () {
-            var parameterMeta = {};
-            var parameter = { meta: parameterMeta };
+        it('should contain the meta data for the Parameters of the Action:', () => {
+            let meta = {};
 
-            var actionModel = new ActionModel();
-            actionModel.parameters.push(parameter);
+            let actionModel = new ActionModel();
+            actionModel.parameters.push({ meta });
 
-            expect(_.first(actionModel.meta.parameters)).to.equal(parameterMeta);
+            let [parameter] = actionModel.meta.parameters
+            expect(parameter).to.equal(meta);
         });
     });
 
-    describe('ActionModel.ast:', function () {
-        it('should be the AST of the Action:', function () {
-            var escodegen = require('escodegen');
-            var os = require('os');
-
-            var component = {
+    describe('ActionModel.ast:', () => {
+        it('should be the AST of the Action:', () => {
+            let component = {
                 variableName: 'Component'
             };
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
             actionModel.name = 'Action';
-            var ast = actionModel.ast;
+            let { ast } = actionModel;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'Component.prototype.action = function () {' + os.EOL +
-                '}'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                Component.prototype.action = function () {
+                }
+            `));
         });
 
-        it('should include any Parameters of the Action:', function () {
-            var escodegen = require('escodegen');
-            var os = require('os');
-
-            var component = {
+        it('should include any Parameters of the Action:', () => {
+            let component = {
                 variableName: 'Component'
             };
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
             actionModel.name = 'Action';
             actionModel.addParameter();
-            var parameter = _.first(actionModel.parameters);
+            let [parameter] = actionModel.parameters;
             parameter.name = 'parameter';
-            var ast = actionModel.ast;
+            let { ast } = actionModel;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'Component.prototype.action = function (parameter) {' + os.EOL +
-                '}'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                Component.prototype.action = function (parameter) {
+                }
+            `));
         });
 
-        it('should include any Interactions of the Action:', function () {
-            var escodegen = require('escodegen');
-            var os = require('os');
-
-            var method = {
+        it('should include any Interactions of the Action:', () => {
+            let method = {
                 name: 'method',
                 returns: 'promise'
             };
-            var browser = {
+            let browser = {
                 methods: [method],
                 name: 'browser',
                 variableName: 'browser'
             };
-            var component = {
-                browser: browser,
+            let component = {
+                browser,
                 variableName: 'Component'
             };
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
             actionModel.name = 'Action';
             actionModel.addInteraction();
-            var ast = actionModel.ast;
+            let { ast } = actionModel;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'Component.prototype.action = function () {' + os.EOL +
-                '    var self = this;' + os.EOL +
-                '    return browser.method();' + os.EOL +
-                '}'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                Component.prototype.action = function () {
+                    var self = this;
+                    return browser.method();
+                }
+            `));
         });
 
-        it('should include Interactions using any Element:', function () {
-            var escodegen = require('escodegen');
-            var os = require('os');
-
-            var browserMethod = {
+        it('should include Interactions using any Element:', () => {
+            let browserMethod = {
                 name: 'method',
                 returns: 'promise'
             };
-            var browser = {
+            let browser = {
                 methods: [browserMethod],
                 name: 'browser',
                 variableName: 'browser'
             };
-            var elementMethod = {
+            let elementMethod = {
                 name: 'method',
                 returns: 'promise'
             };
-            var element = {
+            let element = {
                 methods: [elementMethod],
                 name: 'element',
                 variableName: 'element'
             };
-            var component = {
-                browser: browser,
+            let component = {
+                browser,
                 domElements: [element],
                 elements: [browser, element],
                 variableName: 'Component'
             };
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
             actionModel.name = 'Action';
             actionModel.addInteraction();
-            var interaction = _.first(actionModel.interactions);
+            let [interaction] = actionModel.interactions;
             interaction.element = element;
-            var ast = actionModel.ast;
+            let { ast } = actionModel;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'Component.prototype.action = function () {' + os.EOL +
-                '    var self = this;' + os.EOL +
-                '    return self.element.method();' + os.EOL +
-                '}'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                Component.prototype.action = function () {
+                    var self = this;
+                    return self.element.method();
+                }
+            `));
         });
 
-        it('should include Interactions that return promises:', function () {
-            var escodegen = require('escodegen');
-            var os = require('os');
-
-            var browserMethod = {
+        it('should include Interactions that return promises:', () => {
+            let browserMethod = {
                 name: 'method',
                 returns: 'promise'
             };
-            var browser = {
+            let browser = {
                 methods: [browserMethod],
                 name: 'browser',
                 variableName: 'browser'
             };
-            var elementMethod = {
+            let elementMethod = {
                 name: 'method',
                 returns: 'promise'
             };
-            var element = {
+            let element = {
                 methods: [elementMethod],
                 name: 'element',
                 variableName: 'element'
             };
-            var component = {
-                browser: browser,
+            let component = {
+                browser,
                 domElements: [element],
                 elements: [browser, element],
                 variableName: 'Component'
             };
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
             actionModel.name = 'Action';
             actionModel.addInteraction();
-            var interactionOne = _.first(actionModel.interactions);
+            let [interactionOne] = actionModel.interactions;
             interactionOne.element = element;
             actionModel.addInteraction();
-            var interactionTwo = _.last(actionModel.interactions);
+            let [interactionTwo] = actionModel.interactions.slice(-1);
             interactionTwo.element = element;
-            var ast = actionModel.ast;
+            let { ast } = actionModel;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'Component.prototype.action = function () {' + os.EOL +
-                '    var self = this;' + os.EOL +
-                '    return self.element.method().then(function () {' + os.EOL +
-                '        return self.element.method();' + os.EOL +
-                '    });' + os.EOL +
-                '}'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                Component.prototype.action = function () {
+                    var self = this;
+                    return self.element.method().then(function () {
+                        return self.element.method();
+                    });
+                }
+            `));
         });
 
-        it('should include Interactions that don\'t return promises:', function () {
-            var escodegen = require('escodegen');
-            var os = require('os');
-
-            var browserMethod = {
+        it('should include Interactions that don\'t return promises:', () => {
+            let browserMethod = {
                 name: 'method',
                 returns: 'promise'
             };
-            var browser = {
+            let browser = {
                 methods: [browserMethod],
                 name: 'browser',
                 variableName: 'browser'
             };
-            var elementMethod = {
+            let elementMethod = {
                 name: 'method',
                 returns: 'string'
             };
-            var element = {
+            let element = {
                 methods: [elementMethod],
                 name: 'element',
                 variableName: 'element'
             };
-            var component = {
-                browser: browser,
+            let component = {
+                browser,
                 domElements: [element],
                 elements: [browser, element],
                 variableName: 'Component'
             };
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
             actionModel.name = 'Action';
             actionModel.addInteraction();
-            var interactionOne = _.first(actionModel.interactions);
+            let [interactionOne] = actionModel.interactions;
             interactionOne.element = element;
             actionModel.addInteraction();
-            var interactionTwo = _.last(actionModel.interactions);
+            let [interactionTwo] = actionModel.interactions.slice(-1);
             interactionTwo.element = element;
-            var ast = actionModel.ast;
+            let { ast } = actionModel;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'Component.prototype.action = function () {' + os.EOL +
-                '    var self = this;' + os.EOL +
-                '    return new Promise(function (resolve) {' + os.EOL +
-                '        resolve(self.element.method());' + os.EOL +
-                '    }).then(function () {' + os.EOL +
-                '        return new Promise(function (resolve) {' + os.EOL +
-                '            resolve(self.element.method());' + os.EOL +
-                '        });' + os.EOL +
-                '    });' + os.EOL +
-                '}'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                Component.prototype.action = function () {
+                    var self = this;
+                    return new Promise(function (resolve) {
+                        resolve(self.element.method());
+                    }).then(function () {
+                        return new Promise(function (resolve) {
+                            resolve(self.element.method());
+                        });
+                    });
+                }
+            `));
         });
 
-        it('should include Interactions that return values:', function () {
-            var escodegen = require('escodegen');
-            var os = require('os');
-
-            var browserMethod = {
+        it('should include Interactions that return values:', () => {
+            let browserMethod = {
                 name: 'method',
                 returns: 'promise'
             };
-            var browser = {
+            let browser = {
                 methods: [browserMethod],
                 name: 'browser',
                 variableName: 'browser'
             };
-            var elementMethod = {
+            let elementMethod = {
                 name: 'method',
                 returns: 'promise',
                 promise: {
                     name: 'resultValue'
                 }
             };
-            var element = {
+            let element = {
                 methods: [elementMethod],
                 name: 'element',
                 variableName: 'element'
             };
-            var component = {
-                browser: browser,
+            let component = {
+                browser,
                 domElements: [element],
                 elements: [browser, element],
                 variableName: 'Component'
             };
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
             actionModel.name = 'Action';
             actionModel.addInteraction();
-            var interactionOne = _.first(actionModel.interactions);
+            let [interactionOne] = actionModel.interactions;
             interactionOne.element = element;
             actionModel.addInteraction();
-            var interactionTwo = _.last(actionModel.interactions);
+            let [interactionTwo] = actionModel.interactions.slice(-1);
             interactionTwo.element = element;
-            var ast = actionModel.ast;
+            let { ast } = actionModel;
 
-            expect(escodegen.generate(ast)).to.equal(
-                'Component.prototype.action = function () {' + os.EOL +
-                '    var self = this;' + os.EOL +
-                '    return self.element.method().then(function (resultValue) {' + os.EOL +
-                '        return self.element.method();' + os.EOL +
-                '    });' + os.EOL +
-                '}'
-            );
+            expect(escodegen.generate(ast)).to.equal(dedent(`
+                Component.prototype.action = function () {
+                    var self = this;
+                    return self.element.method().then(function (resultValue) {
+                        return self.element.method();
+                    });
+                }
+            `));
         });
     });
 
-    describe('ActionModel.addParameter:', function () {
-        it('should add a new Parameter to the Action:', function () {
-            var actionModel = new ActionModel();
+    describe('ActionModel.addParameter:', () => {
+        it('should add a new Parameter to the Action:', () => {
+            let actionModel = new ActionModel();
             actionModel.addParameter();
 
             expect(actionModel.parameters.length).to.equal(1);
-            var parameter = _.first(actionModel.parameters);
+            let [parameter] = actionModel.parameters;
             expect(parameter).to.be.an.instanceof(ParameterModel);
         });
     });
 
-    describe('ActionModel.removeParameter:', function () {
-        it('should remove a Parameter from the Action:', function () {
-            var actionModel = new ActionModel();
+    describe('ActionModel.removeParameter:', () => {
+        it('should remove a Parameter from the Action:', () => {
+            let actionModel = new ActionModel();
             actionModel.addParameter();
 
-            var parameter = _.first(actionModel.parameters);
+            let [parameter] = actionModel.parameters;
             actionModel.removeParameter(parameter);
             expect(actionModel.parameters.length).to.equal(0);
         });
     });
 
-    describe('ActionModel.addInteraction:', function () {
-        it('should add a new Interaction to the Action:', function () {
-            var browser = {
+    describe('ActionModel.addInteraction:', () => {
+        it('should add a new Interaction to the Action:', () => {
+            let browser = {
                 methods: [{}]
             };
-            var component = {
-                browser: browser
+            let component = {
+                browser
             };
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
             actionModel.addInteraction();
 
             expect(actionModel.interactions.length).to.equal(1);
-            var interaction = _.first(actionModel.interactions);
+            let [interaction] = actionModel.interactions;
             expect(interaction).to.be.an.instanceof(InteractionModel);
         });
 
-        it('should set the default element of the Interaction to be the browser:', function () {
-            var browser = {
+        it('should set the default element of the Interaction to be the browser:', () => {
+            let browser = {
                 methods: [{}]
             };
-            var component = {
-                browser: browser
+            let component = {
+                browser
             };
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
             actionModel.addInteraction();
 
             expect(actionModel.interactions.length).to.equal(1);
-            var interaction = _.first(actionModel.interactions);
+            let [interaction] = actionModel.interactions;
             expect(interaction.element).to.equal(browser);
         });
     });
 
-    describe('ActionModel.removeInteraction:', function () {
-        it('should remove a Interaction from the Action:', function () {
-            var browser = {
+    describe('ActionModel.removeInteraction:', () => {
+        it('should remove a Interaction from the Action:', () => {
+            let browser = {
                 methods: [{}]
             };
-            var component = {
-                browser: browser
+            let component = {
+                browser
             };
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
             actionModel.addInteraction();
 
-            var interaction = _.first(actionModel.interactions);
+            let [interaction] = actionModel.interactions;
             actionModel.removeInteraction(interaction);
             expect(actionModel.interactions.length).to.equal(0);
         });
     });
 
-    describe('ActionModel.getAllVariableNames:', function () {
-        it('should return all the variables associated with this Action\'s Component:', function () {
-            var component = new MockComponentModel();
-            var allVariableNames = [];
+    describe('ActionModel.getAllVariableNames:', () => {
+        it('should return all the variables associated with this Action\'s Component:', () => {
+            let component = {
+                getAllVariableNames: angular.noop
+            };
+            let allVariableNames = [];
 
-            var actionModel = new ActionModel(component);
+            let actionModel = new ActionModel(component);
 
             sinon.stub(component, 'getAllVariableNames').returns(allVariableNames);
 

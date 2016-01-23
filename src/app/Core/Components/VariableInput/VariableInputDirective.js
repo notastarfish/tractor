@@ -2,7 +2,6 @@
 
 // Utilities:
 import changecase from 'change-case';
-import isUndefined from 'lodash.isundefined';
 
 // Dependencies:
 import angular from 'angular';
@@ -14,36 +13,36 @@ class VariableInputDirective {
         this.restrict = 'E';
 
         this.scope = {
+            form: '=',
             model: '=',
             label: '@',
             example: '@'
         };
 
         this.template = template;
-    }
 
-    link ($scope, $element, $attrs) {
-        if (isUndefined($scope.model)) {
-            throw new Error('The "tractor-variable-input" directive requires a "model" attribute.');
-        }
+        this.link = ($scope, $element, $attrs) => {
+            if (angular.isUndefined($scope.model)) {
+                throw new Error('The <tractor-variable-input> directive requires a "model" attribute.');
+            }
 
-        if (isUndefined($scope.label)) {
-            throw new Error('The "tractor-variable-input" directive requires a "label" attribute.');
-        }
+            if (angular.isUndefined($scope.label)) {
+                throw new Error('The <tractor-variable-input> directive requires a "label" attribute.');
+            }
 
-        if (isUndefined($attrs.form)) {
-            throw new Error('The "tractor-variable-input" directive requires a "form" attribute.');
-        }
+            if (angular.isUndefined($scope.form)) {
+                throw new Error('The <tractor-variable-input> directive requires a "form" attribute.');
+            }
 
-        $scope.form = $scope.$parent[$attrs.form];
-        $scope.id = Math.floor(Math.random() * Date.now());
+            $scope.id = Math.floor(Math.random() * Date.now());
 
-        $scope.isClass = Object.prototype.hasOwnProperty.call($attrs, 'isClass');
-        $scope.property = changecase.camel($scope.label);
+            $scope.isClass = Object.prototype.hasOwnProperty.call($attrs, 'isClass');
+            $scope.property = changecase.camel($scope.label);
+        };
     }
 }
 
-export default angular.module('tractorVariableInput', [
+export default angular.module('tractor.variableInput', [
     VariableNameValidator.name
 ])
-.directive('tractorVariableInput', VariableInputDirective);
+.directive('tractorVariableInput', () => new VariableInputDirective());

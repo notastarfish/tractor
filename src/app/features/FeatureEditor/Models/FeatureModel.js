@@ -7,16 +7,18 @@ import flatten from 'lodash.flatten';
 import angular from 'angular';
 import ScenarioModel from './ScenarioModel';
 
+// Symbols:
+const options = Symbol();
+const scenarios = Symbol();
+
 function createFeatureModelConstructor (
     FeatureIndent,
     FeatureNewLine,
     ScenarioModel
 ) {
-    const scenarios = Symbol();
-
     return class FeatureModel {
-        constructor (options = {}) {
-            this.options = options;
+        constructor (_options = {}) {
+            this[options] = _options;
             this[scenarios] = [];
 
             this.name = '';
@@ -25,12 +27,12 @@ function createFeatureModelConstructor (
             this.iWant = '';
         }
 
-        get isSave () {
-            return !!this.options.isSaved;
+        get isSaved () {
+            return !!this[options].isSaved;
         }
 
         get path () {
-            return this.options.path;
+            return this[options].path;
         }
 
         get scenarios () {
@@ -72,7 +74,7 @@ function createFeatureModelConstructor (
     }
 }
 
-export default angular.module('featureModel', [
+export default angular.module('tractor.featureModel', [
     ScenarioModel.name
 ])
 .factory('FeatureModel', createFeatureModelConstructor);

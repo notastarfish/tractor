@@ -26,6 +26,7 @@ class ExpectationParserService {
 
             return expectation;
         } catch (e) {
+            console.log(e.message);
             console.warn('Invalid expectation:', ast);
             return null;
         }
@@ -50,7 +51,7 @@ function parseArguments (expectation, expectationCallExpression) {
     });
 }
 
-export default angular.module('expectationParserService', [
+export default angular.module('tractor.expectationParserService', [
     ExpectationModel.name
 ])
-.service('ExpectationParserService', ExpectationParserService);
+.service('expectationParserService', ExpectationParserService);

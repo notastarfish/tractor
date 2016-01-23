@@ -2,26 +2,22 @@
 
 // Dependencies:
 import angular from 'angular';
+import NotifierController from './NotifierController';
 import NotifierService from './NotifierService';
 import template from './Notifier.html'
 
 class NotifierDirective {
-    constructor (
-        notifierService
-    ) {
-        this.notifierService = notifierService;
-
+    constructor () {
         this.restrict = 'E';
         this.template = template;
-    }
 
-    link ($scope) {
-        $scope.notifications = this.notifierService.notifications;
-        $scope.dismiss = this.notifierService.dismiss;
+        this.controller = NotifierController;
+        this.controllerAs = 'notifier';
+        this.bindToController = true;
     }
 }
 
-export default angular.module('tractorNotifier', [
+export default angular.module('tractor.notifier', [
     NotifierService.name
 ])
-.directive('tractorNotifier', NotifierDirective);
+.directive('tractorNotifier', () => new NotifierDirective());

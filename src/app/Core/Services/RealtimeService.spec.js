@@ -1,53 +1,53 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
 // Utilities:
-var Promise = require('bluebird');
-
-// Test Utilities:
-var chai = require('chai');
-var sinon = require('sinon');
-var sinonChai = require('sinon-chai');
+import chai from 'chai';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 chai.use(sinonChai);
 
+// Dependencies:
+import socket from 'socket.io-client';
+
 // Testing:
-require('./RealTimeService');
-var realTimeService;
+import './RealTimeService';
+let realTimeService;
 
-describe('RealTimeService.js:', function () {
-    var config;
+describe('RealTimeService.js:', () => {
+    let config;
 
-    beforeEach(function () {
-        angular.mock.module('Core');
+    beforeEach(() => {
+        angular.mock.module('tractor.realTimeService');
 
-        angular.mock.module(function ($provide) {
-            config = {};
-            $provide.factory('config', function () {
+        angular.mock.module($provide => {
+            $provide.factory('config', () => {
+                config = {};
                 return config;
             });
         });
 
-        angular.mock.inject(function (_realTimeService_) {
+        angular.mock.inject(_realTimeService_ => {
             realTimeService = _realTimeService_;
         });
     });
 
-    describe('RealTimeService.connect:', function () {
-        it('should connect to the given room via the port in the config:', function () {
-            var socket = require('socket.io-client');
-            var connection = {};
+    describe('RealTimeService.connect:', () => {
+        it('should connect to the given room via the port in the config:', () => {
+            let connection = {};
+            let events = {};
 
             config.port = 1234;
             sinon.stub(socket, 'connect').returns(connection);
 
-            var connected = realTimeService.connect('room');
+            let connected = realTimeService.connect('room', events);
 
             expect(connected).to.equal(connection);
             expect(socket.connect).to.have.been.calledWith('http://localhost:1234/room');
@@ -55,12 +55,11 @@ describe('RealTimeService.js:', function () {
             socket.connect.restore();
         });
 
-        it('should attach the given events to the connection:', function () {
-            var socket = require('socket.io-client');
-            var connection = {
+        it('should attach the given events to the connection:', () => {
+            let connection = {
                 on: angular.noop
             };
-            var events = {
+            let events = {
                 event: angular.noop
             };
 

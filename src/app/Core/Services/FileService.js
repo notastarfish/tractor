@@ -1,6 +1,6 @@
 'use strict';
 
-export default class FileService {
+class FileService {
     constructor (
         $http,
         parserService,
@@ -48,3 +48,5 @@ function findFileByPath (fileStructure, filePath) {
         return file.path.includes(filePath) || file.path.includes(filePath.replace(/\//g, '\\'));
     });
 }
+
+export default FileService;

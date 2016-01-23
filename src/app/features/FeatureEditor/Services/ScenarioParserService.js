@@ -20,50 +20,60 @@ class ScenarioParserService {
         this.stepDeclarationParserService = stepDeclarationParserService;
     }
 
-    parse (feature, tokens) {
-        let scenario = new this.ScenarioModel();
+    parse (tokens) {
+        try {
+            let scenario = new this.ScenarioModel();
 
-        scenario.name = tokens.name;
+            parseScenario.call(this, scenario, tokens);
 
-        tokens.stepDeclarations.forEach((stepDeclaration, index) => {
-            let notStep = false;
+            let parsers = [parseStepDeclarations, parseExamples];
+            tryParse.call(this, scenario, tokens, parsers);
 
-            try {
-                let parsedStepDeclaration = this.stepDeclarationParserService.parse(stepDeclaration);
-                assert(parsedStepDeclaration);
-                scenario.stepDeclarations.push(parsedStepDeclaration);
-            } catch (e) {
-                notStep = true;
-            }
-
-            if (notStep) {
-                console.log(stepDeclaration, index);
-            }
-        });
-
-        tokens.examples.forEach((example, index) => {
-            let notExample = false;
-
-            try {
-                let parsedExample = this.exampleParserService.parse(scenario, example);
-                assert(parsedExample);
-                scenario.examples.push(parsedExample);
-            } catch (e) {
-                notExample = true;
-            }
-
-            if (notExample) {
-                console.log(example, index);
-            }
-        });
-
-        return scenario;
+            return scenario;
+        } catch (e) {
+            console.warn('Invalid scenario:', tokens);
+            return null;
+        }
     }
 }
 
-export default angular.module('scenarioParserService', [
+function parseScenario (scenario, tokens) {
+    scenario.name = tokens.name;
+    assert(scenario.name);
+}
+
+function tryParse (scenario, tokens, parsers) {
+    let parsed = parsers.every(parser => {
+        try {
+            return parser.call(this, scenario, tokens);
+        } catch (e) { }
+    });
+    if (!parsed) {
+        throw new Error();
+    }
+}
+
+function parseStepDeclarations (scenario, tokens) {
+    tokens.stepDeclarations.forEach((stepDeclaration) => {
+        let parsedStepDeclaration = this.stepDeclarationParserService.parse(stepDeclaration);
+        assert(parsedStepDeclaration);
+        scenario.stepDeclarations.push(parsedStepDeclaration);
+    });
+    return true;
+}
+
+function parseExamples (scenario, tokens) {
+    tokens.examples.forEach((example) => {
+        let parsedExample = this.exampleParserService.parse(scenario, example);
+        assert(parsedExample);
+        scenario.examples.push(parsedExample);
+    });
+    return true;
+}
+
+export default angular.module('tractor.scenarioParserService', [
     ExampleParserService.name,
     ScenarioModel.name,
     StepDeclarationParserService.name
 ])
-.service('ScenarioParserService', ScenarioParserService);
+.service('scenarioParserService', ScenarioParserService);

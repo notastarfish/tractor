@@ -22,7 +22,7 @@ class ConfirmDialogDirective {
     }
 }
 
-export default angular.module('tractorConfirmDialog', [
+export default angular.module('tractor.confirmDialog', [
     ConfirmDialogController.name
 ])
-.directive('tractorConfirmDialog', ConfirmDialogDirective);
+.directive('tractorConfirmDialog', () => new ConfirmDialogDirective());

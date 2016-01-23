@@ -25,7 +25,7 @@ function fixFeatureParameters (options) {
     return options;
 }
 
-export default angular.module('featureFileService', [
+export default angular.module('tractor.featureFileService', [
     FeatureParserService.name,
     FileStructureService.name
 ])

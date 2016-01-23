@@ -1,60 +1,53 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
-// Test Utilities:
-var chai = require('chai');
-var dirtyChai = require('dirty-chai');
+// Utilities:
+import chai from 'chai';
+import dirtyChai from 'dirty-chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 chai.use(dirtyChai);
 
-// Mocks:
-var MockHttpResponseInterceptor = require('../../Services/HttpResponseInterceptor.mock');
-
 // Testing:
-require('./SubmitDirective');
+import './SubmitDirective';
 
-describe('SubmitDirective.js:', function() {
-    var $compile;
-    var $rootScope;
+describe('SubmitDirective.js:', () => {
+    let $compile;
+    let $rootScope;
 
-    beforeEach(function () {
-        angular.mock.module('Core');
+    beforeEach(() => {
+        angular.mock.module('tractor.submit');
 
-        angular.mock.module(function ($provide) {
-            $provide.factory('HttpResponseInterceptor', function () {
-                return new MockHttpResponseInterceptor();
-            });
-        });
-
-        angular.mock.inject(function (_$compile_, _$rootScope_) {
+        angular.mock.inject((_$compile_, _$rootScope_) => {
             $compile = _$compile_;
             $rootScope = _$rootScope_;
         });
     });
 
-    var compileDirective = function (template, scope) {
-        var directive = $compile(template)(scope);
+    const compileDirective = (template, scope) => {
+        let directive = $compile(template)(scope);
         scope.$digest();
         return directive;
     };
 
-    describe('Link function:', function () {
-        it('should throw an error when an `action` is not passed in:', function () {
-            expect(function () {
-                var scope = $rootScope.$new();
+    describe('Link function:', () => {
+        it('should throw an error when an "action" is not passed in:', () => {
+            let scope = $rootScope.$new();
+
+            expect(() => {
                 compileDirective('<tractor-submit></tractor-submit>', scope);
-            }).to.throw('The "tractor-submit" directive requires an "action" attribute.');
+            }).to.throw('The <tractor-submit> directive requires an "action" attribute.');
         });
 
-        it('should successfully compile the directive otherwise:', function () {
-            expect(function () {
-                var scope = $rootScope.$new();
+        it('should successfully compile the directive otherwise:', () => {
+            let scope = $rootScope.$new();
+
+            expect(() => {
                 compileDirective('<tractor-submit action="Some action"></tractor-submit>', scope);
             }).not.to.throw();
         });

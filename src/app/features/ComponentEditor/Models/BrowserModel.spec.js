@@ -1,54 +1,48 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
-// Test Utilities:
-var chai = require('chai');
-var dirtyChai = require('dirty-chai');
+// Utilities:
+import chai from 'chai';
+import dirtyChai from 'dirty-chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 chai.use(dirtyChai);
 
 // Testing:
-require('./BrowserModel');
-var BrowserModel;
+import './BrowserModel';
+let BrowserModel;
 
-describe('BrowserModel.js:', function () {
-    beforeEach(function () {
-        angular.mock.module('ComponentEditor');
+describe('BrowserModel.js:', () => {
+    beforeEach(() => {
+        angular.mock.module('tractor.browserModel');
 
-        angular.mock.inject(function (_BrowserModel_) {
+        angular.mock.inject(_BrowserModel_ => {
             BrowserModel = _BrowserModel_;
         });
     });
 
-    describe('BrowserModel constructor:', function () {
-        it('should create a new `BrowserModel`:', function () {
-            var browserModel = new BrowserModel();
+    describe('BrowserModel constructor:', () => {
+        it('should create a new `BrowserModel`:', () => {
+            let browserModel = new BrowserModel();
             expect(browserModel).to.be.an.instanceof(BrowserModel);
         });
 
-        it('should have default properties:', function () {
-            var browserModel = new BrowserModel();
+        it('should have default properties:', () => {
+            let browserModel = new BrowserModel();
 
             expect(browserModel.name).to.equal('browser');
             expect(browserModel.variableName).to.equal('browser');
         });
 
-        it('should have data about all the browser methods from Protractor:', function () {
-            var browserModel = new BrowserModel();
+        it('should have data about all the browser methods from Protractor:', () => {
+            let browserModel = new BrowserModel();
 
-            expect(browserModel.methods.length).to.equal(5);
-
-            var get = browserModel.methods[0];
-            var refresh = browserModel.methods[1];
-            var setLocation = browserModel.methods[2];
-            var getLocationAbsUrl = browserModel.methods[3];
-            var waitForAngular = browserModel.methods[4];
+            let [get, refresh, setLocation, getLocationAbsUrl, waitForAngular] = browserModel.methods;
 
             expect(get.name).to.equal('get');
             expect(refresh.name).to.equal('refresh');

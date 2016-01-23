@@ -2,7 +2,6 @@
 
 // Utilities:
 import changecase from 'change-case';
-import isUndefined from 'lodash.isundefined';
 
 // Dependencies:
 import angular from 'angular';
@@ -20,20 +19,20 @@ class ActionDirective {
         };
 
         this.template = template;
-    }
 
-    link ($scope) {
-        if (isUndefined($scope.model)) {
-            throw new Error('The "tractor-action" directive requires a "model" attribute.');
-        }
+        this.link = $scope => {
+            if (angular.isUndefined($scope.model)) {
+                throw new Error(`The <tractor-action> directive requires a "model" attribute.`);
+            }
 
-        if (isUndefined($scope.action)) {
-            throw new Error('The "tractor-action" directive requires an "action" attribute.');
-        }
+            if (angular.isUndefined($scope.action)) {
+                throw new Error(`The <tractor-action> directive requires an "action" attribute.`);
+            }
 
-        $scope.method = changecase.camel($scope.action);
+            $scope.method = changecase.camel($scope.action);
+        };
     }
 }
 
-export default angular.module('tractorAction', [])
-.directive('tractorAction', ActionDirective);
+export default angular.module('tractor.action', [])
+.directive('tractorAction', () => new ActionDirective());

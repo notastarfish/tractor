@@ -10,20 +10,20 @@ class GiveFocusDirective {
         this.scope = {
             focusOn: '='
         };
-    }
 
-    link ($scope, $element) {
-        $scope.$watch('focusOn', currentValue => {
-            let [input] = $element;
-            if (currentValue) {
-                input.focus();
-                input.select();
-            } else {
-                input.blur();
-            }
-        });
+        this.link = ($scope, $element) => {
+            $scope.$watch('focusOn', currentValue => {
+                let [input] = $element;
+                if (currentValue) {
+                    input.focus();
+                    input.select();
+                } else {
+                    input.blur();
+                }
+            });
+        };
     }
 }
 
-export default angular.module('tractorGiveFocus', [])
-.directive('tractorGiveFocus', GiveFocusDirective);
+export default angular.module('tractor.giveFocus', [])
+.directive('tractorGiveFocus', () => new GiveFocusDirective());

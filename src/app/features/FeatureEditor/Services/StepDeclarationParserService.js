@@ -1,5 +1,8 @@
 'use strict';
 
+// Utilities:
+import assert from 'assert';
+
 // Dependencies
 import angular from 'angular';
 import StepDeclarationModel from '../Models/StepDeclarationModel';
@@ -12,16 +15,27 @@ class StepDeclarationParserService {
     }
 
     parse (tokens) {
-        let stepDeclaration = new this.StepDeclarationModel();
+        try {
+            let stepDeclaration = new this.StepDeclarationModel();
 
-        stepDeclaration.type = tokens.type;
-        stepDeclaration.step = tokens.step;
+            parseStepDeclaration(stepDeclaration, tokens);
 
-        return stepDeclaration;
+            return stepDeclaration;
+        } catch (e) {
+            console.warn('Invaid step declarartion:', tokens);
+            return null;
+        }
     }
 }
 
-export default angular.module('stepDeclarationParserService', [
+function parseStepDeclaration (stepDeclaration, tokens) {
+    stepDeclaration.type = tokens.type;
+    assert(stepDeclaration.type);
+    stepDeclaration.step = tokens.step;
+    assert(stepDeclaration.step);
+}
+
+export default angular.module('tractor.stepDeclarationParserService', [
     StepDeclarationModel.name
 ])
-.service('StepDeclarationParserService', StepDeclarationParserService);
+.service('stepDeclarationParserService', StepDeclarationParserService);

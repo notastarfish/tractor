@@ -1,35 +1,32 @@
-/*global beforeEach:true, describe:true, it:true */
+/* global beforeEach:true, describe:true, it:true */
 'use strict';
 
 // Angular:
-var angular = require('angular');
-require('angular-mocks');
+import angular from 'angular';
+import 'angular-mocks';
 
 // Utilities:
-var _ = require('lodash');
-
-// Test Utilities:
-var chai = require('chai');
+import chai from 'chai';
 
 // Test setup:
-var expect = chai.expect;
+const expect = chai.expect;
 
 // Testing:
-require('./StringToLiteralService');
-var stringToLiteralService;
+import './StringToLiteralService';
+let stringToLiteralService;
 
-describe('StringToLiteralService.js:', function () {
-    beforeEach(function () {
-        angular.mock.module('Core');
+describe('StringToLiteralService.js:', () => {
+    beforeEach(() => {
+        angular.mock.module('tractor.stringToLiteralService');
 
-        angular.mock.inject(function (_stringToLiteralService_) {
+        angular.mock.inject(_stringToLiteralService_ => {
             stringToLiteralService = _stringToLiteralService_;
         });
     });
 
-    describe('StringToLiteralService.toLiteral:', function () {
-        it('should turn string values into their JavaScript literal equivalents:', function () {
-            var tests = [{
+    describe('StringToLiteralService.toLiteral:', () => {
+        it('should turn string values into their JavaScript literal equivalents:', () => {
+            let tests = [{
                 string: 'true',
                 literal: true
             }, {
@@ -52,7 +49,7 @@ describe('StringToLiteralService.js:', function () {
                 literal: 'just a string'
             }];
 
-            _.each(tests, function (test) {
+            tests.forEach(test => {
                 expect(stringToLiteralService.toLiteral(test.string)).to.deep.equal(test.literal);
             });
         });
