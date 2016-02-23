@@ -22,26 +22,14 @@ let StepDefinitionModel;
 
 describe('StepDefinitionModel.js:', () => {
     let ComponentInstanceModel;
-    let componentFileService;
-    let mockDataFileService;
     let MockDataInstanceModel;
     let StepModel;
 
     beforeEach(() => {
+        angular.mock.module('tractor.componentFileService');
+        angular.mock.module('tractor.mockDataFileService');
         angular.mock.module('tractor.stepDefinitionModel');
         angular.mock.module('tractor.stepModel');
-
-        angular.mock.module($provide => {
-            $provide.factory('componentFileService', () => {
-                componentFileService = {};
-                return componentFileService;
-            });
-
-            $provide.factory('mockDataFileService', () => {
-                mockDataFileService = {};
-                return mockDataFileService;
-            });
-        });
 
         angular.mock.inject((
             _ComponentInstanceModel_,

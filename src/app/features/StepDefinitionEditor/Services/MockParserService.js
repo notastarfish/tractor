@@ -20,18 +20,13 @@ class MockParserService {
 
             let mockCallExpression = ast.expression;
 
-            mock.action = parseAction(mock, mockCallExpression);
-            mock.url = parseUrl(mock, mockCallExpression);
+            parseAction(mock, mockCallExpression);
+            parseUrl(mock, mockCallExpression);
 
-            try {
-                return parseData(mock, mockCallExpression);
-            } catch (e) {}
+            let parsers = [parseData, parsePassThrough];
+            tryParse.call(this, mock, mockCallExpression, parsers);
 
-            try {
-                return parsePassThrough(mock, mockCallExpression);
-            } catch (e) {}
-
-            throw new Error();
+            return mock;
         } catch (e) {
             console.warn('Invalid mock:', ast);
             return null;
@@ -39,11 +34,23 @@ class MockParserService {
     }
 }
 
+function tryParse (mock, mockCallExpression, parsers) {
+    let parsed = parsers.some(parser => {
+        try {
+            return parser.call(this, mock, mockCallExpression);
+        } catch (e) {}
+    });
+    if (!parsed) {
+        throw new Error();
+    }
+}
+
 function parseAction (mock, mockCallExpression) {
     let action = mockCallExpression.callee.object.callee.property.name.replace(/^when/, '');
     assert(action);
     assert(mock.actions.includes(action));
-    return action;
+    mock.action = action;
+    return true;
 }
 
 function parseUrl (mock, mockCallExpression) {
@@ -51,7 +58,8 @@ function parseUrl (mock, mockCallExpression) {
     let url = argument.raw;
     let urlRegex = new RegExp(url.replace(/^\//, '').replace(/\/$/, ''));
     assert(urlRegex);
-    return urlRegex.source;
+    mock.url = urlRegex.source;
+    return true;
 }
 
 function parseData (mock, mockCallExpression) {
@@ -60,16 +68,16 @@ function parseData (mock, mockCallExpression) {
     mock.data = mock.step.stepDefinition.mockDataInstances.find(mockDataInstance => {
         return mockDataInstance.variableName === instanceName;
     });
-    return mock;
+    return true;
 }
 
 function parsePassThrough (mock, mockCallExpression) {
     assert(mockCallExpression.callee.property.name === 'passThrough');
     mock.passThrough = true;
-    return mock;
+    return true;
 }
 
-export default angular.module('mockParserService', [
+export default angular.module('tractor.mockParserService', [
     MockModel.name
 ])
 .service('mockParserService', MockParserService);

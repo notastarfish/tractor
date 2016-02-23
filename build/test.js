@@ -94,7 +94,7 @@ function client (done) {
 
         colors: true,
         autoWatch: true,
-        singleRun: true
+        singleRun: false
     }, (exitCode) => {
         if (exitCode) {
             done('There are failing unit tests');

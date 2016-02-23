@@ -82,7 +82,7 @@ function parseStep (stepDefinition, statement) {
     return true;
 }
 
-export default angular.module('stepDefinitionParserService', [
+export default angular.module('tractor.stepDefinitionParserService', [
     StepParserService.name,
     StepDefinitionModel.name
 ])

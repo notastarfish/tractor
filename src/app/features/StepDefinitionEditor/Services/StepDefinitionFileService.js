@@ -16,7 +16,7 @@ class StepDefinitionFileService extends FileService {
     }
 }
 
-export default angular.module('stepDefinitionFileService', [
+export default angular.module('tractor.stepDefinitionFileService', [
     FileStructureService.name,
     StepDefinitionParserService.name
 ])

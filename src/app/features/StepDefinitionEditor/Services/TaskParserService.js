@@ -61,7 +61,9 @@ function parseFirstTask (ast) {
 function parseSubsequentTask (ast) {
     let [thenFunctionExpression] = ast.arguments;
     let [taskReturnStatement] = thenFunctionExpression.body.body;
-    return taskReturnStatement.argument;
+    let { argument } = taskReturnStatement;
+    assert(argument.callee.object.name && argument.callee.property.name);
+    return argument;
 }
 
 function parseTask (step, taskCallExpression) {
@@ -69,9 +71,11 @@ function parseTask (step, taskCallExpression) {
     task.component = task.step.stepDefinition.componentInstances.find(componentInstance => {
         return taskCallExpression.callee.object.name === componentInstance.variableName;
     });
+    assert(task.component);
     task.action = task.component.component.actions.find(action => {
         return taskCallExpression.callee.property.name === action.variableName;
     });
+    assert(task.action);
     taskCallExpression.arguments.forEach((argument, index) => {
         task.arguments[index].value = argument.value;
     });
@@ -79,7 +83,7 @@ function parseTask (step, taskCallExpression) {
     return true;
 }
 
-export default angular.module('taskParserService', [
+export default angular.module('tractor.taskParserService', [
     TaskModel.name
 ])
 .service('taskParserService', TaskParserService);

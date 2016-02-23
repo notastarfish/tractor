@@ -111,11 +111,12 @@ function parseMockDone (step, statement) {
 }
 
 function parseTaskDone (step, statement) {
-    assert(statement.expression.callee.object.arguments[0].name === 'done');
+    let [argument] = statement.expression.callee.object.arguments;
+    assert(argument.name === 'done');
     return true;
 }
 
-export default angular.module('stepParserService', [
+export default angular.module('tractor.stepParserService', [
     ExpectationParserService.name,
     MockParserService.name,
     StepModel.name,
