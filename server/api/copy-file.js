@@ -15,6 +15,12 @@ function handler (request, response) {
 
     return fileStructure.copyFile(path)
     .then(() => getFileStructure.handler(request, response))
-    .catch(TractorError, error => errorHandler.handler(response, error))
-    .catch(() => errorHandler.handler(response, new TractorError(`Could not copy "${path}"`)));
+    .catch(TractorError, (error) => {
+        console.log('foo');
+        return errorHandler.handler(response, error);
+    })
+    .catch((error) => {
+        console.log(error);
+        return errorHandler.handler(response, new TractorError(`Could not copy "${path}"`))
+    });
 }

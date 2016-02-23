@@ -15,13 +15,13 @@
     "node": ">=0.10"
   },
   "devDependencies": {
-    "babel-core": "6.2.1",
-    "babel-eslint": "4.1.6",
-    "babel-polyfill": "6.2.0",
-    "babel-preset-es2015": "6.1.18",
+    "babel-eslint": "5.0.0",
+    "babel-polyfill": "6.5.0",
+    "babel-preset-es2015": "6.5.0",
     "browser-sync": "2.9.11",
     "chai": "2.3.0",
     "chai-as-promised": "5.1.0",
+    "dedent": "0.6.0",
     "del": "2.1.0",
     "dirty-chai": "1.2.2",
     "gulp": "3.9.0",
@@ -39,7 +39,7 @@
     "istanbul": "gotwarlost/istanbul.git#source-map",
     "jspm": "0.16.15",
     "karma": "0.13.15",
-    "karma-babel-preprocessor": "5.2.2",
+    "karma-babel-preprocessor": "6.0.1",
     "karma-chai": "0.1.0",
     "karma-chrome-launcher": "0.2.1",
     "karma-coverage": "douglasduteil/karma-coverage#next",
@@ -56,7 +56,7 @@
     "systemjs-builder": "0.14.11"
   },
   "dependencies": {
-    "babel-core": "6.1.21",
+    "babel-core": "6.5.2",
     "bluebird": "2.10.2",
     "body-parser": "1.14.1",
     "change-case": "2.3.0",
@@ -69,7 +69,6 @@
     "estemplate": "0.4.0",
     "express": "4.13.3",
     "gherkin": "2.12.2",
-    "karma-babel-preprocessor": "6.0.1",
     "lodash": "3.10.1",
     "npmlog": "1.2.1",
     "socket.io": "1.3.7",

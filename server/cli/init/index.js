@@ -1,7 +1,7 @@
 'use strict';
 
 // Config:
-import { config } from '../../config';
+import config from '../../config/config';
 
 // Utilities:
 import log from 'npmlog';

@@ -31,24 +31,24 @@ export default class FeatureLexerFormatter {
         asA = asA.replace(AS_A, '');
         iWant = iWant.replace(I_WANT, '');
 
-        let feature = { type, name, inOrderTo, asA, iWant, elements: [] };
-        this.features.push(feature);
+        let featureInstance = { type, name, inOrderTo, asA, iWant, elements: [] };
+        this.features.push(featureInstance);
     }
 
     background (type, name, description) {
-        let background = { type, name, description, examples: [], stepDeclarations: [] };
-        this.lastFeature.elements.push(background);
+        let backgroundInstance = { type, name, description, examples: [], stepDeclarations: [] };
+        this.lastFeature.elements.push(backgroundInstance);
     }
 
     scenario (type, name, description) {
-        let scenario = { type, name, description, examples: [], stepDeclarations: [] };
-        this.lastFeature.elements.push(scenario);
+        let scenarioInstance = { type, name, description, examples: [], stepDeclarations: [] };
+        this.lastFeature.elements.push(scenarioInstance);
     }
 
     /* eslint-disable camelcase */
     scenario_outline (type, name, description) {
-        let scenario_outline = { type, name, description, examples: [], stepDeclarations: [] };
-        this.lastFeature.elements.push(scenario_outline);
+        let scenarioOutlineInstance = { type, name, description, examples: [], stepDeclarations: [] };
+        this.lastFeature.elements.push(scenarioOutlineInstance);
     }
     /* eslint-enable camelcase */
 
